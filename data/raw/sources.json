@@ -1,0 +1,50 @@
+[
+  {
+    "key": "mlit-pnw",
+    "title": "歩行空間ネットワークデータ（渋谷地区・2018年3月版適用）",
+    "url": "https://www.hokoukukan.go.jp/metadata/detail/65",
+    "license": "政府標準利用規約（第2.0版） / 国土交通省",
+    "files": [
+      {
+        "name": "mlit-pnw/node.csv",
+        "bytes": 129012,
+        "sha256": "4e5e4026803f5799d6db8b5ca41487178e2ec54ee0dcf03900fbc63f6e0e8678"
+      },
+      {
+        "name": "mlit-pnw/link.csv",
+        "bytes": 124219,
+        "sha256": "3a171299a2e967382286d19cfce0df5dd8b232cd7a3b48ba9e8d46d13dd94fcd"
+      }
+    ],
+    "fetchedAt": "2026-08-30T11:41:33.298Z"
+  },
+  {
+    "key": "mlit-facility",
+    "title": "施設データ（渋谷地区・2018年3月版適用）",
+    "url": "https://www.hokoukukan.go.jp/metadata/detail/65",
+    "license": "政府標準利用規約（第2.0版） / 国土交通省",
+    "files": [
+      {
+        "name": "mlit-facility/facility.csv",
+        "bytes": 4225,
+        "sha256": "87bf19addb194a16abee7302d9cd4073de9305942443463550e85251e2b67b39"
+      }
+    ],
+    "fetchedAt": "2026-08-30T11:41:33.298Z"
+  },
+  {
+    "key": "osm",
+    "title": "OpenStreetMap — 시부야역 주변 건물·승강장·실내 통로",
+    "url": "https://www.openstreetmap.org/",
+    "license": "ODbL 1.0 — © OpenStreetMap contributors",
+    "files": [
+      {
+        "name": "osm/shibuya.json",
+        "bytes": 3834202,
+        "sha256": "3f555301d35182910e8284ee02728141ae687d12fcdbbf419a422c0cd5608b8b"
+      }
+    ],
+    "fetchedAt": "2026-08-30T11:41:33.298Z",
+    "query": "[out:json][timeout:180];\n(\n  way[\"building\"](35.652,139.6935,35.665,139.7085);\n  relation[\"building\"](35.652,139.6935,35.665,139.7085);\n  way[\"railway\"=\"platform\"](35.652,139.6935,35.665,139.7085);\n  relation[\"railway\"=\"platform\"](35.652,139.6935,35.665,139.7085);\n  way[\"public_transport\"=\"platform\"](35.652,139.6935,35.665,139.7085);\n  way[\"railway\"~\"^(rail|subway|light_rail)$\"](35.652,139.6935,35.665,139.7085);\n  way[\"highway\"~\"^(footway|steps|elevator|corridor|pedestrian|path)$\"](35.652,139.6935,35.665,139.7085);\n  way[\"indoor\"][\"indoor\"!=\"no\"](35.652,139.6935,35.665,139.7085);\n  node[\"railway\"=\"subway_entrance\"](35.652,139.6935,35.665,139.7085);\n  node[\"railway\"=\"train_station_entrance\"](35.652,139.6935,35.665,139.7085);\n  node[\"entrance\"](35.652,139.6935,35.665,139.7085);\n  node[\"highway\"=\"elevator\"](35.652,139.6935,35.665,139.7085);\n  node[\"railway\"=\"station\"](35.652,139.6935,35.665,139.7085);\n  node[\"public_transport\"=\"station\"](35.652,139.6935,35.665,139.7085);\n);\nout body geom;"
+  }
+]
