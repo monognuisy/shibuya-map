@@ -1,30 +1,30 @@
 <script lang="ts">
   import { formatDuration } from '~/lib/graph';
   import { levelCode } from '~/lib/levels';
-  import { LINK_KIND_LABELS, OPERATOR_COLORS } from '~/lib/palette';
   import type { AppState } from '~/lib/store.svelte';
+  import Itinerary from './Itinerary.svelte';
 
   let { app }: { app: AppState } = $props();
 
-  const routable = $derived(app.places.filter((p) => !p.planned || app.showPlanned));
+  const GROUPS: { kind: string; label: string }[] = [
+    { kind: 'platform', label: '승강장' },
+    { kind: 'gate', label: '개찰' },
+    { kind: 'plaza', label: '광장 · 콘코스' },
+    { kind: 'passage', label: '연결통로' },
+    { kind: 'building', label: '건물' },
+    { kind: 'entrance', label: '지상 출입구' },
+  ];
 
-  /** 같은 종류가 이어지는 구간을 하나로 묶어 안내문을 만든다. */
-  const legs = $derived.by(() => {
-    const r = app.route;
-    if (!r) return [];
-    const out: { kind: string; distance: number; seconds: number; note?: string }[] = [];
-    for (const s of r.steps) {
-      const last = out[out.length - 1];
-      const note = s.edge.n && s.edge.n !== '레이어 접합' ? s.edge.n : undefined;
-      if (last && last.kind === s.edge.k && !note && !last.note) {
-        last.distance += s.distance;
-        last.seconds += s.seconds;
-      } else {
-        out.push({ kind: s.edge.k, distance: s.distance, seconds: s.seconds, note });
-      }
-    }
-    return out.filter((l) => l.distance > 2 || l.kind !== 'walk');
-  });
+  // 수직 동선은 목적지로 고르기에 적절치 않아 뺀다.
+  const groups = $derived(
+    GROUPS.map((g) => ({
+      ...g,
+      items: app.places.filter(
+        (p) => p.kind === g.kind && (!p.planned || app.showPlanned),
+      ),
+    })).filter((g) => g.items.length),
+  );
+
 </script>
 
 <section class="pane route">
@@ -33,13 +33,21 @@
   <label class="fld">
     <span>출발</span>
     <select bind:value={app.fromId}>
-      {#each routable as p (p.id)}<option value={p.id}>{p.name}</option>{/each}
+      {#each groups as g (g.kind)}
+        <optgroup label={g.label}>
+          {#each g.items as p (p.id)}<option value={p.id}>{p.name}</option>{/each}
+        </optgroup>
+      {/each}
     </select>
   </label>
   <label class="fld">
     <span>도착</span>
     <select bind:value={app.toId}>
-      {#each routable as p (p.id)}<option value={p.id}>{p.name}</option>{/each}
+      {#each groups as g (g.kind)}
+        <optgroup label={g.label}>
+          {#each g.items as p (p.id)}<option value={p.id}>{p.name}</option>{/each}
+        </optgroup>
+      {/each}
     </select>
   </label>
 
@@ -72,15 +80,7 @@
         {/each}
       </div>
     </div>
-    <ol class="legs">
-      {#each legs as leg, i (i)}
-        <li>
-          <span class="k" data-kind={leg.kind}>{LINK_KIND_LABELS[leg.kind] ?? leg.kind}</span>
-          <span class="m">{Math.round(leg.distance)} m</span>
-          {#if leg.note}<span class="nt">{leg.note}</span>{/if}
-        </li>
-      {/each}
-    </ol>
+    <Itinerary {app} />
   {:else if app.fromId === app.toId}
     <p class="empty">출발과 도착이 같습니다.</p>
   {:else}

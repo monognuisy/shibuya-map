@@ -1,5 +1,6 @@
 /** 앱 전역 상태. Svelte 5 runes 로 반응성을 갖는다. */
 import { WalkGraph, type RouteResult } from './graph';
+import { buildItinerary, type Itinerary } from './itinerary';
 import type { MapDoc, PlaceDoc } from './mapdoc';
 import type { ViewState } from './scene';
 
@@ -63,6 +64,11 @@ export class AppState {
       includePlanned: this.showPlanned,
       avoidPaidShortcut: this.avoidPaidShortcut,
     });
+  }
+
+  get itinerary(): Itinerary | null {
+    const r = this.route;
+    return r && this.doc ? buildItinerary(this.doc, r) : null;
   }
 
   get matches(): PlaceDoc[] {
