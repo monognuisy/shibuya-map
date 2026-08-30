@@ -95,6 +95,46 @@ describe('경로 탐색', () => {
     expect(new Set(levels)).toEqual(new Set([3, 2, 1, -2]));
   });
 
+  it('승강장은 중심선을 따라 노드 체인을 갖는다', () => {
+    const plat = doc.places.find((p) => p.id === 'plat-jr-yamanote')!;
+    expect(plat.nodes!.length).toBeGreaterThan(5);
+    // 남쪽 끝과 북쪽 끝은 승강장 길이만큼 떨어져 있어야 한다
+    const ys = plat.nodes!.map((n) => doc.graph.nodes[n]![1]);
+    expect(Math.max(...ys) - Math.min(...ys)).toBeGreaterThan(150);
+    // 출발·도착으로는 대표점 하나만 쓴다
+    expect(WalkGraph.nodesOf(plat)).toHaveLength(1);
+  });
+
+  it('승강장 남쪽 개찰과 북쪽 개찰은 서로 다른 지점에 붙는다', () => {
+    const plat = doc.places.find((p) => p.id === 'plat-jr-yamanote')!;
+    const chain = new Set(plat.nodes!);
+    const attach = (gateId: string) => {
+      const g = doc.places.find((p) => p.id === gateId)!;
+      const e = doc.graph.edges.find(
+        (x) =>
+          (chain.has(x.a) && g.nodes!.includes(x.b)) || (chain.has(x.b) && g.nodes!.includes(x.a)),
+      );
+      expect(e, gateId).toBeDefined();
+      const n = chain.has(e!.a) ? e!.a : e!.b;
+      return doc.graph.nodes[n]![1];
+    };
+    // 신남개찰(남쪽)과 하치코개찰(북쪽)의 접속 지점이 100m 이상 떨어져 있어야
+    // '어느 쪽 에스컬레이터를 타느냐'가 거리로 드러난다
+    expect(attach('gate-jr-hachiko') - attach('gate-jr-shinminami')).toBeGreaterThan(100);
+  });
+
+  it('OSM 수직 동선이 개별 시설로 올라온다', () => {
+    const vs = doc.places.filter((p) => p.kind === 'vertical');
+    expect(vs.length).toBeGreaterThan(10);
+    expect(vs.some((v) => v.linkKind === 'escalator')).toBe(true);
+    for (const v of vs) {
+      expect(v.connectLevels).toHaveLength(2);
+      expect(v.connectLevels![0]).toBeLessThan(v.connectLevels![1]);
+    }
+    // 링크에서 어느 설비인지 되짚을 수 있어야 한다
+    expect(doc.graph.edges.some((e) => e.v)).toBe(true);
+  });
+
   it('공사중 링크는 기본 옵션에서 제외된다', () => {
     const withPlanned = graph.route(placeOf('plaza-hachiko'), placeOf('plan-skyway'), {
       barrierFree: false,

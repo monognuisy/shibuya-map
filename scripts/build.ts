@@ -14,7 +14,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { ORIGIN, dist2, polylineLength, toMeters, type Vec2 } from '../src/lib/geo.ts';
-import { levelZ, mlitFloorToLevel } from '../src/lib/levels.ts';
+import { levelCode, levelZ, mlitFloorToLevel } from '../src/lib/levels.ts';
 import {
   buildingHeight,
   isClosed,
@@ -92,6 +92,8 @@ interface GEdge {
   bf: boolean;
   /** 개찰 안쪽(유료 구역)을 지나는 링크인가 */
   paid?: boolean;
+  /** 이 링크가 속한 수직 동선(계단·에스컬레이터·EV) 지점 id */
+  vertical?: string;
   src: Src;
   planned?: boolean;
   /** 중간 형상 (있을 때만) */
@@ -228,8 +230,25 @@ interface OsmOut {
   buildings: unknown[];
   platformShapes: unknown[];
   entrances: unknown[];
+  verticals: VerticalOut[];
   ways: number;
   segs: number;
+}
+
+/** OSM 에 실좌표로 들어 있는 계단·에스컬레이터·엘리베이터 한 대 */
+interface VerticalOut {
+  id: string;
+  kind: LinkKind;
+  from: number;
+  to: number;
+  x: number;
+  y: number;
+  /** 아래쪽 / 위쪽 끝 그래프 노드 */
+  nodeLo: number;
+  nodeHi: number;
+  name: string | null;
+  conveying: string | null;
+  wheelchair: string | null;
 }
 
 function ringMeters(geom: { lat: number; lon: number }[]): [number, number][] {
@@ -264,6 +283,7 @@ async function loadOsm(): Promise<OsmOut> {
   const buildings: unknown[] = [];
   const platformShapes: unknown[] = [];
   const entrances: unknown[] = [];
+  const verticals: VerticalOut[] = [];
 
   for (const e of els) {
     const t = e.tags ?? {};
@@ -355,9 +375,19 @@ async function loadOsm(): Promise<OsmOut> {
     const pts = geom.map((p) => toMeters(p));
     if (pts.every((p) => Math.hypot(p.x, p.y) > RADIUS)) continue;
 
+    // 층을 오르내리는 설비는 개별 시설로 따로 세워 둔다. 같은 통로라도 어느
+    // 에스컬레이터를 타느냐에 따라 도착지가 달라지기 때문에, 이걸 한 덩어리로
+    // 뭉뚱그리면 경로 안내가 쓸모없어진다.
+    const isVertical = kind === 'stairs' || kind === 'escalator' || kind === 'elevator';
+    const mid = pts[Math.floor(pts.length / 2)]!;
+    const verticalId =
+      isVertical && lv.length && from !== to && Math.hypot(mid.x, mid.y) <= RADIUS
+        ? `v-${e.id}`
+        : undefined;
     const total = polylineLength(pts) || 1;
     let acc = 0;
-    let prev = addNode(pts[0]!.x, pts[0]!.y, from, `osm:${ids[0]}@${from}`);
+    const first = addNode(pts[0]!.x, pts[0]!.y, from, `osm:${ids[0]}@${from}`);
+    let prev = first;
     let placed = false;
 
     for (let i = 1; i < pts.length; i++) {
@@ -372,6 +402,7 @@ async function loadOsm(): Promise<OsmOut> {
         d,
         bf: BARRIER_FREE[kind] && t.wheelchair !== 'no',
         src: 'osm',
+        vertical: verticalId,
         note: t.name ?? undefined,
       });
       prev = cur;
@@ -379,9 +410,25 @@ async function loadOsm(): Promise<OsmOut> {
       placed = true;
     }
     if (placed) ways++;
+
+    if (verticalId && placed) {
+      verticals.push({
+        id: verticalId,
+        kind,
+        from,
+        to,
+        x: r1(mid.x),
+        y: r1(mid.y),
+        nodeLo: from <= to ? first : prev,
+        nodeHi: from <= to ? prev : first,
+        name: t.name ?? t.ref ?? null,
+        conveying: t.conveying ?? null,
+        wheelchair: t.wheelchair ?? null,
+      });
+    }
   }
 
-  return { buildings, platformShapes, entrances, ways, segs };
+  return { buildings, platformShapes, entrances, verticals, ways, segs };
 }
 
 const round4 = (n: number) => Math.round(n * 4) / 4;
@@ -407,12 +454,16 @@ interface PlaceOut {
   tags?: Record<string, string>;
   /** 대표 노드 */
   node: number;
-  /** 이 지점에 속한 모든 그래프 노드 (건물은 접속 층마다 하나씩) */
+  /** 이 지점에 속한 모든 그래프 노드 (건물은 접속 층마다, 선형 지점은 중심선을 따라) */
   nodes?: number[];
+  /** 경로 탐색의 출발·도착으로 쓸 수 있는 노드 */
+  entries?: number[];
   /** 개찰 안쪽 */
   paid?: boolean;
-  /** 건물이 바깥과 이어지는 층 */
+  /** 건물이 바깥과 이어지는 층 / 수직 동선이 잇는 두 층 */
   connectLevels?: number[];
+  /** 수직 동선의 종류 */
+  linkKind?: LinkKind;
 }
 
 /** `bldg-hikarie@-3` → `bldg-hikarie` */
@@ -423,12 +474,43 @@ function baseId(ref: string): string {
 
 function loadCurated(external: Map<string, number>): PlaceOut[] {
   const out: PlaceOut[] = [];
-  const nodeOf = new Map<string, number>(external);
+  const nodeOf = new Map<string, number>();
+  /** 선형 지점(승강장·연락통로)은 중심선을 따라 노드를 여러 개 갖는다 */
+  const chains = new Map<string, number[]>();
 
   for (const p of CURATED_PLACES) {
     const m = toMeters({ lat: p.at[0], lon: p.at[1] });
-    const n = addNode(m.x, m.y, p.level, `curated:${p.id}`);
-    nodeOf.set(p.id, n);
+    const line = p.line?.map((ll) => {
+      const q = toMeters({ lat: ll[0], lon: ll[1] });
+      return { x: q.x, y: q.y };
+    });
+
+    let node: number;
+    let chain: number[] | undefined;
+    if (line && line.length >= 2) {
+      chain = buildChain(p.id, line, p.level);
+      chains.set(p.id, chain);
+      node = chain[Math.floor(chain.length / 2)]!;
+      // 체인을 따라 실제 거리만큼 걷게 한다. 승강장 남쪽 끝에서 북쪽 개찰로
+      // 가려면 승강장 길이만큼 걸어야 한다는 사실이 여기서 나온다.
+      for (let i = 1; i < chain.length; i++) {
+        addEdge({
+          a: chain[i - 1]!,
+          b: chain[i]!,
+          kind: 'walk',
+          d: dist2(nodes[chain[i - 1]!]!, nodes[chain[i]!]!),
+          bf: true,
+          paid: p.paid,
+          src: 'curated',
+          note: `${p.name} 내부 이동`,
+          planned: p.planned,
+        });
+      }
+    } else {
+      node = addNode(m.x, m.y, p.level, `curated:${p.id}`);
+    }
+    nodeOf.set(p.id, node);
+
     out.push({
       id: p.id,
       name: p.name,
@@ -438,28 +520,40 @@ function loadCurated(external: Map<string, number>): PlaceOut[] {
       level: p.level,
       x: r1(m.x),
       y: r1(m.y),
-      line: p.line?.map((ll) => {
-        const q = toMeters({ lat: ll[0], lon: ll[1] });
-        return [r1(q.x), r1(q.y)] as [number, number];
-      }),
+      line: line?.map((q) => [r1(q.x), r1(q.y)] as [number, number]),
       width: p.width,
       desc: p.desc,
       planned: p.planned,
       provenance: 'curated',
       tags: p.tags,
       paid: p.paid,
-      node: n,
+      node,
+      nodes: chain ?? [node],
+      entries: [node],
     });
   }
 
   const paidOf = new Map(CURATED_PLACES.map((p) => [p.id, Boolean(p.paid)]));
 
+  /** 링크 끝점 후보. 선형 지점은 체인 전체, 건물은 층별 노드. */
+  const candidates = (ref: string): number[] => {
+    const ext = external.get(ref);
+    if (ext !== undefined) return [ext];
+    const chain = chains.get(ref);
+    if (chain) return chain;
+    const n = nodeOf.get(ref);
+    return n === undefined ? [] : [n];
+  };
+
   for (const l of CURATED_LINKS) {
-    const a = nodeOf.get(l.from);
-    const b = nodeOf.get(l.to);
-    if (a === undefined || b === undefined) {
+    const ca = candidates(l.from);
+    const cb = candidates(l.to);
+    if (!ca.length || !cb.length) {
       throw new Error(`curated 링크의 끝점을 찾을 수 없음: ${l.from} → ${l.to}`);
     }
+    // 선형 지점에는 상대 지점에 가장 가까운 곳에 붙인다. 어느 계단·에스컬레이터를
+    // 쓰는지를 손으로 지정하지 않아도, 실제 형상이 붙는 위치를 정해 준다.
+    const [a, b] = nearestPair(ca, cb);
     const d = l.distance ?? dist2(nodes[a]!, nodes[b]!);
     addEdge({
       a,
@@ -477,6 +571,42 @@ function loadCurated(external: Map<string, number>): PlaceOut[] {
   }
 
   return out;
+}
+
+/** 중심선을 따라 노드를 깐다. 긴 구간은 최대 `STEP` 간격으로 잘게 나눈다. */
+const CHAIN_STEP = 35;
+
+function buildChain(id: string, line: Vec2[], level: number): number[] {
+  const chain: number[] = [addNode(line[0]!.x, line[0]!.y, level, `curated:${id}#0`)];
+  let k = 1;
+  for (let i = 1; i < line.length; i++) {
+    const a = line[i - 1]!;
+    const b = line[i]!;
+    const len = dist2(a, b);
+    const steps = Math.max(1, Math.round(len / CHAIN_STEP));
+    for (let j = 1; j <= steps; j++) {
+      const t = j / steps;
+      chain.push(
+        addNode(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t, level, `curated:${id}#${k++}`),
+      );
+    }
+  }
+  return chain;
+}
+
+function nearestPair(ca: number[], cb: number[]): [number, number] {
+  let best: [number, number] = [ca[0]!, cb[0]!];
+  let bestD = Infinity;
+  for (const a of ca) {
+    for (const b of cb) {
+      const d = dist2(nodes[a]!, nodes[b]!);
+      if (d < bestD) {
+        bestD = d;
+        best = [a, b];
+      }
+    }
+  }
+  return best;
 }
 
 /* ────────────────────────────────────── 3-b. 실제 형상 붙이기 */
@@ -644,6 +774,7 @@ function emitOsmPlaces(osm: OsmOut): { places: PlaceOut[]; ids: Map<string, numb
       connectLevels: connect,
       node: ground.node,
       nodes: perLevel.map((x) => x.node),
+      entries: perLevel.map((x) => x.node),
     });
   }
 
@@ -681,11 +812,54 @@ function emitOsmPlaces(osm: OsmOut): { places: PlaceOut[]; ids: Map<string, numb
       tags: Object.keys(tags).length ? tags : undefined,
       node,
       nodes: [node],
+      entries: [node],
+    });
+  }
+
+  for (const v of osm.verticals) {
+    const lo = Math.min(v.from, v.to);
+    const hi = Math.max(v.from, v.to);
+    const label = VERTICAL_LABELS[v.kind] ?? '수직 동선';
+    const tags: Record<string, string> = {
+      구간: `${levelCode(lo)} ↔ ${levelCode(hi)}`,
+    };
+    if (v.conveying && v.conveying !== 'no') {
+      tags['운행 방향'] =
+        { yes: '단방향', both: '양방향', reversible: '시간대별 전환', forward: '단방향', backward: '단방향' }[
+          v.conveying
+        ] ?? v.conveying;
+    }
+    if (v.wheelchair) {
+      tags['휠체어'] =
+        { yes: '가능', no: '불가', limited: '일부 가능' }[v.wheelchair] ?? v.wheelchair;
+    }
+    places.push({
+      id: v.id,
+      name: v.name ? `${v.name} ${label}` : `${label} ${levelCode(lo)}–${levelCode(hi)}`,
+      kind: 'vertical',
+      operator: 'facility',
+      level: lo,
+      x: v.x,
+      y: v.y,
+      desc: 'OpenStreetMap 에 실좌표로 등록된 수직 동선입니다. 같은 통로라도 설비마다 도착하는 층·방면이 다릅니다.',
+      provenance: 'osm',
+      tags,
+      linkKind: v.kind,
+      connectLevels: [lo, hi],
+      node: v.nodeLo,
+      nodes: [v.nodeLo, v.nodeHi],
+      entries: [v.nodeLo, v.nodeHi],
     });
   }
 
   return { places, ids };
 }
+
+const VERTICAL_LABELS: Partial<Record<LinkKind, string>> = {
+  stairs: '계단',
+  escalator: '에스컬레이터',
+  elevator: '엘리베이터',
+};
 
 /* ───────────────────────────────────────────── 4. 레이어 간 접합(스냅) */
 
@@ -779,10 +953,15 @@ function largestComponent(): { size: number; components: number } {
   return { size: best, components: comps };
 }
 
-/** 최대 연결 성분에 속한 노드 집합. */
-function mainComponent(): Set<number> {
+/**
+ * 최대 연결 성분에 속한 노드 집합.
+ * `includePlanned` 가 false 면 공사 중 링크를 빼고 계산한다 — 아직 없는 시설을
+ * 통해서만 닿는 지점은 지금은 갈 수 없는 곳이다.
+ */
+function mainComponent(includePlanned: boolean): Set<number> {
   const adj = new Map<number, number[]>();
   for (const e of edges) {
+    if (e.planned && !includePlanned) continue;
     (adj.get(e.a) ?? adj.set(e.a, []).get(e.a)!).push(e.b);
     (adj.get(e.b) ?? adj.set(e.b, []).get(e.b)!).push(e.a);
   }
@@ -825,15 +1004,19 @@ async function main() {
   for (const [k, v] of nodeKey) keyOfNode.set(v, k);
   const stitched = stitch(
     { mlit: 12, curated: 45, building: 140 },
-    new Set(places.filter((p) => p.paid).map((p) => p.node)),
+    new Set(places.filter((p) => p.paid).flatMap((p) => p.nodes ?? [p.node])),
   );
 
   const comp = largestComponent();
 
   // 주 네트워크에 닿지 않는 지점은 경로 안내에 쓸 수 없다.
   // OSM 유래(고립된 출입구 등)는 조용히 버리고, curated 는 데이터 오류이므로 실패시킨다.
-  const main = mainComponent();
-  const orphans = places.filter((p) => !main.has(p.node));
+  const mainAll = mainComponent(true);
+  const mainNow = mainComponent(false);
+  // 공사 중 지점은 개통을 가정했을 때 닿으면 되고, 나머지는 지금 닿아야 한다.
+  const orphans = places.filter((p) =>
+    p.planned ? !mainAll.has(p.node) : !mainNow.has(p.node),
+  );
   const badCurated = orphans.filter((p) => p.provenance === 'curated');
   if (badCurated.length) {
     throw new Error(
@@ -865,6 +1048,7 @@ async function main() {
         curatedPlaces: CURATED_PLACES.length,
         landmarkPlaces: places.filter((p) => p.kind === 'building').length,
         entrancePlaces: places.filter((p) => p.kind === 'entrance').length,
+        verticalPlaces: places.filter((p) => p.kind === 'vertical').length,
         droppedPlaces: dropped.length,
         platformShapesMatched: shapesMatched,
         curatedLinks: CURATED_LINKS.length,
@@ -889,6 +1073,7 @@ async function main() {
         s: e.s,
         bf: e.bf ? 1 : 0,
         ...(e.paid ? { paid: 1 as const } : {}),
+        ...(e.vertical ? { v: e.vertical } : {}),
         src: e.src,
         ...(e.planned ? { p: 1 } : {}),
         ...(e.note ? { n: e.note } : {}),

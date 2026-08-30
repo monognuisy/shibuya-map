@@ -15,6 +15,7 @@ export class AppState {
     curated: true,
     landmarks: true,
     entrances: true,
+    verticals: false,
     mlit: true,
     osm: true,
     buildings: true,

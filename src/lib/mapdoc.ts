@@ -55,12 +55,16 @@ export interface PlaceDoc {
   tags?: Record<string, string>;
   /** graph.nodes 인덱스 (대표) */
   node: number;
-  /** 이 지점에 속한 모든 노드. 건물은 접속 층마다 하나씩 있다. */
+  /** 이 지점에 속한 모든 노드. 건물은 접속 층마다, 선형 지점은 중심선을 따라. */
   nodes?: number[];
+  /** 경로 탐색의 출발·도착으로 쓸 수 있는 노드 */
+  entries?: number[];
   /** 개찰 안쪽 */
   paid?: boolean;
-  /** 건물이 바깥과 이어지는 층 */
+  /** 건물이 바깥과 이어지는 층 / 수직 동선이 잇는 두 층 */
   connectLevels?: number[];
+  /** 수직 동선(kind='vertical')의 종류 */
+  linkKind?: LinkKind;
 }
 
 export type EdgeSource = 'mlit' | 'osm' | 'curated';
@@ -77,6 +81,8 @@ export interface EdgeDoc {
   bf: 0 | 1;
   /** 개찰 안쪽(유료 구역)을 지나는 링크 */
   paid?: 1;
+  /** 이 링크가 속한 수직 동선 지점 id */
+  v?: string;
   src: EdgeSource;
   /** 공사중 */
   p?: 1;

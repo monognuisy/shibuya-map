@@ -56,9 +56,9 @@ export class WalkGraph {
     return this.doc.graph.nodes.length;
   }
 
-  /** 지점이 가진 모든 노드. 건물은 접속 층마다 하나씩 있다. */
+  /** 경로의 출발·도착으로 쓸 수 있는 노드. */
   static nodesOf(p: PlaceDoc): number[] {
-    return p.nodes?.length ? p.nodes : [p.node];
+    return p.entries?.length ? p.entries : [p.node];
   }
 
   private usable(e: EdgeDoc, o: RouteOptions): boolean {

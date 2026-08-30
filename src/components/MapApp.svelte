@@ -101,6 +101,7 @@
     passage: 3,
     building: 4,
     entrance: 5,
+    vertical: 6,
   };
 
   function positionLabels(labels: LabelBox[]) {

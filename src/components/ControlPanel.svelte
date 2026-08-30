@@ -8,6 +8,7 @@
     { key: 'curated', label: SOURCE_LABELS.curated, color: SOURCE_COLORS.curated },
     { key: 'landmarks', label: '주요 건물', color: '#7f8fa3' },
     { key: 'entrances', label: '지상 출입구', color: '#12A5C8' },
+    { key: 'verticals', label: '계단 · 에스컬레이터 · EV', color: '#E8B23A' },
     { key: 'mlit', label: SOURCE_LABELS.mlit, color: SOURCE_COLORS.mlit },
     { key: 'osm', label: SOURCE_LABELS.osm, color: SOURCE_COLORS.osm },
     { key: 'buildings', label: '그 밖의 건물', color: '#2b3949' },

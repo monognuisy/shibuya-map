@@ -33,6 +33,7 @@ export const KIND_LABELS: Record<string, string> = {
   platform: '승강장',
   gate: '개찰',
   entrance: '출입구',
+  vertical: '수직 동선',
   building: '건물',
   plaza: '광장 · 콘코스',
   passage: '연결통로',
@@ -46,6 +47,12 @@ export const LINK_KIND_LABELS: Record<string, string> = {
   elevator: '엘리베이터',
   ramp: '경사로',
   transfer: '환승',
+};
+
+export const VERTICAL_COLORS: Record<string, string> = {
+  escalator: '#E8B23A',
+  stairs: '#E8846A',
+  elevator: '#6FC3E0',
 };
 
 export const PROVENANCE_LABELS: Record<string, string> = {

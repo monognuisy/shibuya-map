@@ -18,6 +18,8 @@ export type PlaceKind =
   | 'gate'
   /** 지상 출입구 (OSM subway_entrance / train_station_entrance) */
   | 'entrance'
+  /** 계단 · 에스컬레이터 · 엘리베이터 한 대 */
+  | 'vertical'
   | 'building'
   | 'plaza'
   | 'passage'

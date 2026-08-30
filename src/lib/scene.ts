@@ -8,7 +8,7 @@
 import * as THREE from 'three';
 
 import { levelZ } from './levels';
-import { OPERATOR_COLORS, SOURCE_COLORS, hex } from './palette';
+import { OPERATOR_COLORS, SOURCE_COLORS, VERTICAL_COLORS, hex } from './palette';
 import type { MapDoc, PlaceDoc, XY } from './mapdoc';
 
 export interface ViewState {
@@ -19,6 +19,7 @@ export interface ViewState {
     buildings: boolean;
     landmarks: boolean;
     entrances: boolean;
+    verticals: boolean;
     mlit: boolean;
     osm: boolean;
     curated: boolean;
@@ -356,11 +357,13 @@ export class MapScene {
       const obj =
         p.kind === 'building'
           ? this.buildingFeature(p, color)
-          : p.footprints?.length
-            ? this.shapeFeature(p, color)
-            : p.kind === 'entrance'
-              ? this.entranceFeature(p, color)
-              : this.pointFeature(p, color);
+          : p.kind === 'vertical'
+            ? this.verticalFeature(p)
+            : p.footprints?.length
+              ? this.shapeFeature(p, color)
+              : p.kind === 'entrance'
+                ? this.entranceFeature(p, color)
+                : this.pointFeature(p, color);
       obj.userData.place = p;
       this.gPlaces.add(obj);
       this.placeMeshes.push({ place: p, mesh: obj });
@@ -443,6 +446,25 @@ export class MapScene {
     return g;
   }
 
+  /**
+   * 계단·에스컬레이터·엘리베이터 한 대: 잇는 두 층 사이를 잇는 가는 기둥.
+   * 높이는 층 간격 배율에 따라 달라지므로 `applyPlaceHeights` 에서 스케일한다.
+   */
+  private verticalFeature(p: PlaceDoc): THREE.Object3D {
+    const color = hex(VERTICAL_COLORS[p.linkKind ?? 'stairs'] ?? '#8A96A6');
+    const geo = new THREE.BoxGeometry(3.4, 1, 3.4);
+    geo.translate(0, 0.5, 0);
+    const mesh = new THREE.Mesh(
+      geo,
+      new THREE.MeshLambertMaterial({ color, transparent: true, opacity: 0.9 }),
+    );
+    mesh.position.set(p.x, 0, -p.y);
+    mesh.userData.verticalBar = true;
+    const g = new THREE.Group();
+    g.add(mesh);
+    return g;
+  }
+
   /** 지상 출입구: 작은 기둥 */
   private entranceFeature(p: PlaceDoc, color: number): THREE.Object3D {
     const g = new THREE.Group();
@@ -493,6 +515,13 @@ export class MapScene {
   private applyPlaceHeights() {
     for (const { place, mesh } of this.placeMeshes) {
       mesh.position.y = this.y(place.level);
+      if (place.kind === 'vertical' && place.connectLevels?.length === 2) {
+        const [lo, hi] = place.connectLevels as [number, number];
+        const span = Math.max(3, this.y(hi) - this.y(lo));
+        mesh.traverse((o) => {
+          if (o.userData.verticalBar) o.scale.y = span;
+        });
+      }
     }
     for (const l of this.labels) {
       l.position.y = this.y(l.level) + 6;
@@ -573,6 +602,7 @@ export class MapScene {
     if (p.planned && !s.showPlanned) return false;
     if (p.kind === 'building') return s.layers.landmarks;
     if (p.kind === 'entrance') return s.layers.entrances;
+    if (p.kind === 'vertical') return s.layers.verticals;
     return s.layers.curated && s.operators.has(p.operator);
   }
 
