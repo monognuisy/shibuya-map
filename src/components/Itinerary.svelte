@@ -41,10 +41,20 @@
     {/if}
 
     {#each rows as { leg, repeat }, i (i)}
-      <li class="move" data-kind={leg.kind}>
+      <li
+        class="move"
+        class:now={app.navOn && i === app.navLegIndex}
+        data-kind={leg.kind}
+      >
         <span class="rail" style="--c:{VERTICAL_COLORS[leg.kind] ?? '#5F6C7D'}"></span>
         <div class="body">
-          <span class="verb">{legSummary(leg)}</span>
+          <button
+            class="verb"
+            onclick={() => {
+              if (app.navT === null) app.navT = 0;
+              app.gotoLeg(i);
+            }}>{legSummary(leg)}</button
+          >
           <span class="num">{Math.round(leg.distance)} m · {formatDuration(leg.seconds)}</span>
           {#if leg.paid}<span class="badge paid">개찰 안</span>{/if}
           {#if leg.vertical}
@@ -166,8 +176,24 @@
     gap: 5px;
     padding: 2px 0 4px;
   }
-  .verb {
+  button.verb {
+    background: none;
+    border: 0;
+    padding: 0;
+    font: inherit;
     color: var(--tx2);
+    cursor: pointer;
+  }
+  button.verb:hover {
+    color: var(--tx);
+  }
+  .move.now {
+    background: rgba(232, 178, 58, 0.09);
+    border-radius: 4px;
+  }
+  .move.now button.verb {
+    color: var(--amber);
+    font-weight: 500;
   }
   .num {
     font-family: var(--mono);

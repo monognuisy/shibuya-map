@@ -28,6 +28,8 @@ export interface Leg {
   arrivalDetail?: string;
   /** 3D 하이라이트·내비게이션용 노드 나열 */
   nodes: number[];
+  /** route.nodes 안에서 이 구간이 끝나는 위치 */
+  endIndex: number;
 }
 
 export interface Itinerary {
@@ -48,23 +50,26 @@ export function buildItinerary(doc: MapDoc, route: RouteResult): Itinerary {
 
   let cur: Leg | null = null;
   let startPlace = byNode.get(route.nodes[0]!);
+  let idx = 0;
 
-  const flush = (arrivalNode: number) => {
+  const flush = (arrivalNode: number, at: number) => {
     if (!cur) return;
     const p = byNode.get(arrivalNode);
     cur.arrival = p;
     cur.arrivalDetail = p ? describePosition(doc, p, arrivalNode) : undefined;
     cur.toLevel = doc.graph.nodes[arrivalNode]![2];
+    cur.endIndex = at;
     legs.push(cur);
     cur = null;
   };
 
   for (const step of route.steps) {
+    idx++;
     const level = doc.graph.nodes[step.from]![2];
     const paid = Boolean(step.edge.paid);
 
     // 이동 수단이나 개찰 안/밖이 달라지면 구간을 끊는다
-    if (cur && (cur.kind !== step.edge.k || cur.paid !== paid)) flush(step.from);
+    if (cur && (cur.kind !== step.edge.k || cur.paid !== paid)) flush(step.from, idx - 1);
 
     cur ??= {
       kind: step.edge.k,
@@ -75,6 +80,7 @@ export function buildItinerary(doc: MapDoc, route: RouteResult): Itinerary {
       paid,
       via: [],
       nodes: [step.from],
+      endIndex: idx,
     };
 
     cur.distance += step.distance;
@@ -90,11 +96,11 @@ export function buildItinerary(doc: MapDoc, route: RouteResult): Itinerary {
     // 이름 있는 지점에 닿으면 거기서 끊어 경유지로 남긴다
     const at = byNode.get(step.to);
     if (at && at !== startPlace && at.kind !== 'vertical') {
-      flush(step.to);
+      flush(step.to, idx);
       startPlace = at;
     }
   }
-  if (cur) flush(route.nodes[route.nodes.length - 1]!);
+  if (cur) flush(route.nodes[route.nodes.length - 1]!, route.nodes.length - 1);
 
   return {
     origin: byNode.get(route.nodes[0]!),

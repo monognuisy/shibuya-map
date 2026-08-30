@@ -80,6 +80,20 @@
         {/each}
       </div>
     </div>
+    <button
+      class="btn follow"
+      onclick={() => {
+        if (app.navOn) {
+          app.navT = null;
+          app.navPlaying = false;
+        } else {
+          app.navT = 0;
+          app.navPlaying = true;
+        }
+      }}
+    >
+      {app.navOn ? '따라가기 끄기' : '경로 따라가기'}
+    </button>
     <Itinerary {app} />
   {:else if app.fromId === app.toId}
     <p class="empty">출발과 도착이 같습니다.</p>
@@ -211,6 +225,18 @@
   .nt {
     color: var(--tx3);
     font-size: 9.5px;
+  }
+  .follow {
+    width: 100%;
+    margin-top: 10px;
+    background: var(--amber);
+    border-color: var(--amber);
+    color: #0e1218;
+    font-weight: 500;
+  }
+  .follow:hover {
+    color: #0e1218;
+    opacity: 0.9;
   }
   .empty {
     margin-top: 10px;

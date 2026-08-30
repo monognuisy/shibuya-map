@@ -69,6 +69,12 @@ export class MapScene {
   private raycaster = new THREE.Raycaster();
 
   /** 궤도 카메라 파라미터 */
+  /** 경로 폴리라인과 누적 길이 — 내비게이션이 이 위를 따라 움직인다 */
+  private routePts: THREE.Vector3[] = [];
+  private routeCum: number[] = [];
+  private follow: { pos: THREE.Vector3; theta: number } | null = null;
+  private yawOffset = 0;
+
   private theta = 0.9;
   private phi = 0.72;
   private distance = 620;
@@ -545,7 +551,7 @@ export class MapScene {
       this.applyPlaceHeights();
       this.applyRiserHeights();
     }
-    if (routeChanged) this.buildRoute();
+    if (routeChanged || exaggerationChanged) this.buildRoute();
     this.apply();
   }
 
@@ -612,6 +618,8 @@ export class MapScene {
 
   private buildRoute() {
     this.gRoute.clear();
+    this.routePts = [];
+    this.routeCum = [];
     const nodesIdx = this.state.routeNodes;
     if (!nodesIdx || nodesIdx.length < 2) return;
     const ns = this.doc.graph.nodes;
@@ -619,6 +627,11 @@ export class MapScene {
       const n = ns[i]!;
       return new THREE.Vector3(n[0], this.y(n[2]) + 1.5, -n[1]);
     });
+    this.routePts = pts;
+    this.routeCum = [0];
+    for (let i = 1; i < pts.length; i++) {
+      this.routeCum.push(this.routeCum[i - 1]! + pts[i]!.distanceTo(pts[i - 1]!));
+    }
     const curve = new THREE.CatmullRomCurve3(pts, false, 'catmullrom', 0.02);
     const tube = new THREE.Mesh(
       new THREE.TubeGeometry(curve, Math.min(pts.length * 6, 900), 5, 8, false),
@@ -667,6 +680,10 @@ export class MapScene {
         const right = new THREE.Vector3(Math.cos(this.theta), 0, -Math.sin(this.theta));
         const fwd = new THREE.Vector3(Math.sin(this.theta), 0, Math.cos(this.theta));
         this.target.addScaledVector(right, -dx * s).addScaledVector(fwd, -dy * s);
+      } else if (this.follow) {
+        // 따라가는 중에는 진행 방향을 기준으로 좌우만 돌린다
+        this.yawOffset -= dx * 0.005;
+        this.phi = clamp(this.phi - dy * 0.005, 0.05, Math.PI / 2 - 0.02);
       } else {
         this.theta -= dx * 0.005;
         this.phi = clamp(this.phi - dy * 0.005, 0.08, Math.PI / 2 - 0.02);
@@ -716,6 +733,13 @@ export class MapScene {
     this.onPick(null);
   }
 
+  /** 경로 따라가기에 맞는 시점(뒤에서 살짝 위) 으로 전환. */
+  enterFollowView(): void {
+    this.distance = 170;
+    this.phi = 0.5;
+    this.yawOffset = 0;
+  }
+
   /** 특정 지점으로 카메라를 이동. */
   focus(id: string) {
     const p = this.doc.places.find((q) => q.id === id);
@@ -724,7 +748,50 @@ export class MapScene {
     this.distance = Math.min(this.distance, 420);
   }
 
+  /** 경로 전체 길이(씬 단위). 층 간격 배율이 바뀌면 함께 달라진다. */
+  get routeLength(): number {
+    return this.routeCum.length ? this.routeCum[this.routeCum.length - 1]! : 0;
+  }
+
+  /** route.nodes 의 index 에 해당하는 진행 거리 */
+  lengthAtIndex(i: number): number {
+    return this.routeCum[Math.max(0, Math.min(i, this.routeCum.length - 1))] ?? 0;
+  }
+
+  /**
+   * 경로 위 `t`(진행 거리) 지점을 따라가는 시점으로 전환한다.
+   * null 이면 평소의 궤도 카메라로 돌아간다.
+   */
+  setFollow(t: number | null): void {
+    if (t === null || this.routePts.length < 2) {
+      this.follow = null;
+      return;
+    }
+    const { point, heading } = this.sampleRoute(t);
+    // 카메라는 진행 방향 반대편에 서서 앞을 본다
+    this.follow = { pos: point, theta: Math.atan2(-heading.x, -heading.z) };
+  }
+
+  private sampleRoute(t: number): { point: THREE.Vector3; heading: THREE.Vector3 } {
+    const total = this.routeLength;
+    const d = Math.max(0, Math.min(t, total));
+    let i = 1;
+    while (i < this.routeCum.length - 1 && this.routeCum[i]! < d) i++;
+    const a = this.routePts[i - 1]!;
+    const b = this.routePts[i]!;
+    const seg = this.routeCum[i]! - this.routeCum[i - 1]!;
+    const u = seg > 0.001 ? (d - this.routeCum[i - 1]!) / seg : 0;
+    const point = a.clone().lerp(b, u);
+    const heading = b.clone().sub(a);
+    heading.y = 0;
+    if (heading.lengthSq() < 1e-6) heading.set(0, 0, -1);
+    heading.normalize();
+    return { point, heading };
+  }
+
   resetView() {
+    this.follow = null;
+    this.yawOffset = 0;
     this.theta = 0.9;
     this.phi = 0.72;
     this.distance = 620;
@@ -736,6 +803,13 @@ export class MapScene {
   private loop = () => {
     if (this.disposed) return;
     this.frame = requestAnimationFrame(this.loop);
+
+    if (this.follow) {
+      // 급격히 튀지 않도록 목표점과 방위를 부드럽게 따라간다
+      this.target.lerp(this.follow.pos, 0.18);
+      this.theta = lerpAngle(this.theta, this.follow.theta + this.yawOffset, 0.14);
+    }
+
     const r = this.distance;
     this.camera.position.set(
       this.target.x + r * Math.cos(this.phi) * Math.sin(this.theta),
@@ -777,6 +851,13 @@ function setOpacity(o: THREE.Object3D, k: number) {
       (m as THREE.Material & { opacity: number }).opacity = b * k;
     }
   });
+}
+
+/** 각도 보간. -π~π 경계에서 한 바퀴 도는 것을 막는다. */
+function lerpAngle(a: number, b: number, k: number): number {
+  let d = ((b - a + Math.PI) % (Math.PI * 2)) - Math.PI;
+  if (d < -Math.PI) d += Math.PI * 2;
+  return a + d * k;
 }
 
 function clamp(v: number, lo: number, hi: number): number {

@@ -16,6 +16,8 @@ export interface UrlState {
   np: boolean;
   /** 건물을 실제 높이로 */
   h: boolean;
+  /** 경로 따라가기 시작 위치(씬 단위). 읽기 전용 — 재생 중에 주소가 바뀌면 시끄럽다 */
+  nav: number | null;
   ex: number | null;
 }
 
@@ -39,6 +41,7 @@ export function readUrl(search: string): Partial<UrlState> {
   if (q.has('bf')) out.bf = q.get('bf') === '1';
   if (q.has('planned')) out.planned = q.get('planned') === '1';
   if (q.has('np')) out.np = q.get('np') === '1';
+  if (q.has('nav')) out.nav = num('nav') ?? 0;
   if (q.has('h')) out.h = q.get('h') === '1';
   return out;
 }
@@ -54,6 +57,7 @@ export function applyUrl(app: AppState, search: string): void {
   if (u.planned !== undefined) app.showPlanned = u.planned;
   if (u.np !== undefined) app.avoidPaidShortcut = u.np;
   if (u.h !== undefined) app.realHeights = u.h;
+  if (u.nav !== undefined && u.nav !== null) app.navT = u.nav;
   if (u.from) app.fromId = known(u.from) ?? app.fromId;
   if (u.to) app.toId = known(u.to) ?? app.toId;
   if (u.sel) app.selectedId = known(u.sel);

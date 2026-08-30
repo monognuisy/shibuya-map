@@ -37,6 +37,35 @@ export class AppState {
 
   query = $state('');
 
+  /** 경로 따라가기 — 경로 위 진행 거리(씬 단위). null 이면 꺼짐 */
+  navT = $state<number | null>(null);
+  navPlaying = $state(false);
+  /** 초당 진행 거리 배속 */
+  navSpeed = $state(1);
+  /** 각 구간이 끝나는 경로상 진행 거리 (씬이 계산해 넣어 준다) */
+  legOffsets = $state<number[]>([]);
+  routeTotal = $state(0);
+
+  get navOn(): boolean {
+    return this.navT !== null;
+  }
+
+  /** 현재 진행 위치가 몇 번째 구간인지 */
+  get navLegIndex(): number {
+    if (this.navT === null) return -1;
+    const offsets = this.legOffsets;
+    let i = 0;
+    while (i < offsets.length - 1 && offsets[i]! < this.navT) i++;
+    return i;
+  }
+
+  /** 구간 i 의 시작 지점으로 이동 */
+  gotoLeg(i: number) {
+    const c = Math.max(0, Math.min(i, this.legOffsets.length - 1));
+    this.navT = c === 0 ? 0 : this.legOffsets[c - 1]!;
+    this.navPlaying = false;
+  }
+
   #graph: WalkGraph | null = null;
 
   get graph(): WalkGraph | null {

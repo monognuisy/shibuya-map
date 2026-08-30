@@ -8,6 +8,7 @@
   import { OPERATOR_COLORS } from '~/lib/palette';
 
   import Attribution from './Attribution.svelte';
+  import NavBar from './NavBar.svelte';
   import ControlPanel from './ControlPanel.svelte';
   import Inspector from './Inspector.svelte';
   import LevelRail from './LevelRail.svelte';
@@ -20,6 +21,7 @@
   let labelHost: HTMLDivElement;
   let scene: MapScene | null = null;
   let labelEls = new Map<string, HTMLElement>();
+
 
   onMount(() => {
     let raf = 0;
@@ -34,11 +36,26 @@
           app.selectedId = id;
         });
         buildLabels(scene.labels);
-        const tick = () => {
+        let last = performance.now();
+        const tick = (now: number) => {
           raf = requestAnimationFrame(tick);
-          if (scene) positionLabels(scene.labels);
+          const dt = Math.min(0.1, (now - last) / 1000);
+          last = now;
+          if (!scene) return;
+          positionLabels(scene.labels);
+
+          // 경로 따라가기 재생
+          if (app.navPlaying && app.navT !== null) {
+            const next = app.navT + NAV_BASE_SPEED * app.navSpeed * dt;
+            if (next >= app.routeTotal) {
+              app.navT = app.routeTotal;
+              app.navPlaying = false;
+            } else {
+              app.navT = next;
+            }
+          }
         };
-        tick();
+        raf = requestAnimationFrame(tick);
       })
       .catch((e: unknown) => {
         const msg = e instanceof Error ? e.message : String(e);
@@ -55,10 +72,42 @@
     };
   });
 
+  /** 경로를 따라가는 속도(씬 단위/초). 실시간 보행 속도로는 너무 느리다. */
+  const NAV_BASE_SPEED = 32;
+
   // 상태가 바뀌면 씬에 반영
   $effect(() => {
     const v = app.view;
     scene?.setState(v);
+  });
+
+  // 경로나 층 간격이 바뀌면 구간 경계를 다시 잰다
+  $effect(() => {
+    const it = app.itinerary;
+    void app.exaggeration;
+    if (!scene || !it) {
+      app.legOffsets = [];
+      app.routeTotal = 0;
+      return;
+    }
+    app.routeTotal = scene.routeLength;
+    app.legOffsets = it.legs.map((l) => scene!.lengthAtIndex(l.endIndex));
+  });
+
+  // 따라가기 카메라
+  $effect(() => {
+    scene?.setFollow(app.navT);
+  });
+
+  // 따라가기에 들어가면 시점을 가깝게 낮춘다
+  let wasNav = false;
+  $effect(() => {
+    const on = app.navOn;
+    if (on !== wasNav) {
+      wasNav = on;
+      if (on) scene?.enterFollowView();
+      else scene?.resetView();
+    }
   });
 
   // 공유 가능한 링크가 되도록 주소창을 상태와 맞춘다 (히스토리는 남기지 않는다)
@@ -72,6 +121,21 @@
     const id = app.selectedId;
     if (id) scene?.focus(id);
   });
+
+  function onKey(e: KeyboardEvent) {
+    if (!app.navOn) return;
+    const tag = (e.target as HTMLElement | null)?.tagName;
+    if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
+    if (e.key === ' ') {
+      e.preventDefault();
+      app.navPlaying = !app.navPlaying;
+    } else if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+      e.preventDefault();
+      app.gotoLeg(app.navLegIndex + (e.key === 'ArrowRight' ? 1 : -1));
+    } else if (e.key === 'Escape') {
+      app.navT = null;
+    }
+  }
 
   function buildLabels(labels: LabelBox[]) {
     labelEls = new Map();
@@ -133,6 +197,8 @@
   }
 </script>
 
+<svelte:window onkeydown={onKey} />
+
 <div class="app">
   <div class="stage" bind:this={stage}></div>
   <div class="labels" bind:this={labelHost}></div>
@@ -153,6 +219,9 @@
   {:else if !app.doc}
     <div class="pane loading">데이터 로딩 중…</div>
   {:else}
+    {#if app.navOn}
+      <NavBar {app} />
+    {/if}
     <LevelRail {app} />
     <ControlPanel {app} onReset={() => scene?.resetView()} />
     <RoutePanel {app} />
