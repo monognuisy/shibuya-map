@@ -33,10 +33,17 @@ export interface CuratedPlace {
   width?: number;
   desc?: string;
   planned?: boolean;
+  /**
+   * 개찰 안쪽(유료 구역)인가.
+   * 승강장과 개찰 안 콘코스만 true 다. 개찰 자체는 경계이므로 false.
+   * 이 표시를 바탕으로 각 링크가 개찰 안/밖 중 어디를 지나는지 정한다.
+   */
+  paid?: boolean;
   tags?: Record<string, string>;
 }
 
 export interface CuratedLink {
+  /** 지점 id. 건물처럼 층마다 접속점이 있는 경우 `bldg-hikarie@-3` 로 층을 지정한다. */
   from: string;
   to: string;
   kind: LinkKind;
@@ -52,6 +59,7 @@ export interface CuratedLink {
 const platforms: CuratedPlace[] = [
   {
     id: 'plat-jr-yamanote',
+    paid: true,
     name: 'JR 야마노테선 승강장',
     nameJa: 'JR山手線ホーム',
     kind: 'platform',
@@ -70,6 +78,7 @@ const platforms: CuratedPlace[] = [
   },
   {
     id: 'plat-jr-saikyo',
+    paid: true,
     name: 'JR 사이쿄선·쇼난신주쿠라인 승강장',
     nameJa: 'JR埼京線・湘南新宿ラインホーム',
     kind: 'platform',
@@ -88,6 +97,7 @@ const platforms: CuratedPlace[] = [
   },
   {
     id: 'plat-ginza',
+    paid: true,
     name: '긴자선 승강장',
     nameJa: '銀座線ホーム',
     kind: 'platform',
@@ -105,7 +115,8 @@ const platforms: CuratedPlace[] = [
   },
   {
     id: 'plat-dt-hanzomon',
-    name: '다마엔토시선·한조몬선 승강장',
+    paid: true,
+    name: '덴엔토시선·한조몬선 승강장',
     nameJa: '田園都市線・半蔵門線ホーム',
     kind: 'platform',
     operator: 'tokyu',
@@ -122,6 +133,7 @@ const platforms: CuratedPlace[] = [
   },
   {
     id: 'plat-toyoko-fukutoshin-34',
+    paid: true,
     name: '도요코선·후쿠토신선 3·4번선 승강장',
     nameJa: '東横線・副都心線 3・4番線ホーム',
     kind: 'platform',
@@ -138,6 +150,7 @@ const platforms: CuratedPlace[] = [
   },
   {
     id: 'plat-toyoko-fukutoshin-56',
+    paid: true,
     name: '도요코선·후쿠토신선 5·6번선 승강장',
     nameJa: '東横線・副都心線 5・6番線ホーム',
     kind: 'platform',
@@ -154,6 +167,7 @@ const platforms: CuratedPlace[] = [
   },
   {
     id: 'plat-inokashira',
+    paid: true,
     name: '이노카시라선 승강장',
     nameJa: '京王井の頭線ホーム',
     kind: 'platform',
@@ -181,7 +195,7 @@ const gates: CuratedPlace[] = [
     operator: 'jr',
     level: 3,
     at: [35.65862, 139.70149],
-    desc: '선로 위 교상 개찰. 스크램블스퀘어 입구, 긴자선 개찰, 서구 데크로 각각 바로 이어지는 사실상의 메인 게이트.',
+    desc: '선로 위 교상 개찰. 스크램블스퀘어 입구, 긴자선 개찰, 서측 데크로 각각 바로 이어지는 사실상의 메인 게이트.',
   },
   {
     id: 'gate-jr-hachiko',
@@ -191,7 +205,7 @@ const gates: CuratedPlace[] = [
     operator: 'jr',
     level: 1,
     at: [35.65911, 139.70112],
-    desc: '하치공 동상·스크램블 교차로로 나가는 지상 개찰.',
+    desc: '하치코 동상·스크램블 교차로로 나가는 지상 개찰.',
   },
   {
     id: 'gate-jr-minami',
@@ -211,7 +225,7 @@ const gates: CuratedPlace[] = [
     operator: 'jr',
     level: 3,
     at: [35.65714, 139.70232],
-    desc: '2024년 7월 21일 새 교상역사로 이전. 원래 위치보다 400m 북쪽으로 올라와 남구 북측 자유통로에 면한다.',
+    desc: '2024년 7월 21일 새 교상역사로 이전. 원래 위치보다 400m 북쪽으로 올라와 남측 북쪽 자유통로에 면한다.',
     tags: { 이전: '2024-07-21' },
   },
   {
@@ -273,7 +287,7 @@ const gates: CuratedPlace[] = [
     operator: 'tokyu',
     level: -2,
     at: [35.65932, 139.70213],
-    desc: '부채꼴 모양의 대형 개찰. 도요코·후쿠토신선과 다마엔토시·한조몬선이 공용해 상시 혼잡하다.',
+    desc: '부채꼴 모양의 대형 개찰. 도요코·후쿠토신선과 덴엔토시·한조몬선이 공용해 상시 혼잡하다.',
   },
   {
     id: 'gate-ty-miyahigashi',
@@ -293,7 +307,7 @@ const gates: CuratedPlace[] = [
     operator: 'tokyu',
     level: -2,
     at: [35.65937, 139.70073],
-    desc: '지하 2층. 하치공 광장·스크램블 교차로 방면 지상 출구와 가장 가깝다. JR 하치코개찰과는 이름만 같고 다른 개찰이다.',
+    desc: '지하 2층. 하치코 광장·스크램블 교차로 방면 지상 출구와 가장 가깝다. JR 하치코개찰과는 이름만 같고 다른 개찰이다.',
   },
   {
     id: 'gate-dt-dogenzaka',
@@ -307,27 +321,27 @@ const gates: CuratedPlace[] = [
   },
   {
     id: 'gate-keio-chuo',
-    name: '이노카시라선 중앙구',
+    name: '게이오 중앙 출입구',
     nameJa: '京王中央口',
     kind: 'gate',
     operator: 'keio',
     level: 2,
     at: [35.65882, 139.69967],
-    desc: '승강장과 같은 2층. 마크시티 EAST 2층에 직결되고, 여기서 자유통로를 따라 하치공 광장으로 나간다. 좌표는 OSM indoor corridor(name=中央改札).',
+    desc: '승강장과 같은 2층. 마크시티 EAST 2층에 직결되고, 여기서 자유통로를 따라 하치코 광장으로 나간다. 좌표는 OSM indoor corridor(name=中央改札).',
   },
   {
     id: 'gate-keio-nishi',
-    name: '이노카시라선 서구',
+    name: '게이오 서 출입구',
     nameJa: '京王西口',
     kind: 'gate',
     operator: 'keio',
     level: 1,
     at: [35.65831, 139.69841],
-    desc: '지상 1층. 서구 로터리·버스 정류장 방면.',
+    desc: '지상 1층. 서측 로터리·버스 정류장 방면.',
   },
   {
     id: 'gate-keio-avenue',
-    name: '이노카시라선 아베뉴구',
+    name: '게이오 아베뉴 출입구',
     nameJa: '京王アベニュー口',
     kind: 'gate',
     operator: 'keio',
@@ -343,7 +357,7 @@ const gates: CuratedPlace[] = [
 const spaces: CuratedPlace[] = [
   {
     id: 'plaza-hachiko',
-    name: '하치공 광장',
+    name: '하치코 광장',
     nameJa: 'ハチ公広場',
     kind: 'plaza',
     operator: 'facility',
@@ -363,7 +377,7 @@ const spaces: CuratedPlace[] = [
   },
   {
     id: 'plaza-east-underground',
-    name: '동구 지하광장',
+    name: '동측 지하광장',
     nameJa: '渋谷駅東口地下広場',
     kind: 'plaza',
     operator: 'facility',
@@ -373,13 +387,14 @@ const spaces: CuratedPlace[] = [
   },
   {
     id: 'conc-b4-transfer',
+    paid: true,
     name: '지하 4층 환승 콘코스',
     nameJa: '地下4階乗換コンコース',
     kind: 'plaza',
     operator: 'tokyu',
     level: -4,
     at: [35.6592, 139.70255],
-    desc: '다마엔토시·한조몬선(B3)과 도요코·후쿠토신선(B5)을 개찰 안에서 잇는 중간층 콘코스.',
+    desc: '덴엔토시·한조몬선(B3)과 도요코·후쿠토신선(B5)을 개찰 안에서 잇는 중간층 콘코스.',
   },
 ];
 
@@ -388,7 +403,7 @@ const spaces: CuratedPlace[] = [
 const passages: CuratedPlace[] = [
   {
     id: 'pass-nishi-deck',
-    name: '서구 연락통로 (시부니시 데크)',
+    name: '서측 연락통로 (시부니시 데크)',
     nameJa: '西口連絡通路・しぶにしデッキ',
     kind: 'passage',
     operator: 'passage',
@@ -418,11 +433,11 @@ const passages: CuratedPlace[] = [
       [35.65913, 139.70092],
     ],
     width: 9,
-    desc: '마크시티 2층 EAST 와 이노카시라선 중앙구를 직결. 여기서 하치공 광장 쪽으로 내려간다.',
+    desc: '마크시티 2층 EAST 와 게이오 중앙 출입구를 직결. 여기서 하치코 광장 쪽으로 내려간다.',
   },
   {
     id: 'pass-nishi-hodo',
-    name: '시부야역 서구 육교',
+    name: '시부야역 서측 육교',
     nameJa: '渋谷駅西口歩道橋',
     kind: 'passage',
     operator: 'passage',
@@ -439,7 +454,7 @@ const passages: CuratedPlace[] = [
   },
   {
     id: 'pass-minami-kita-jiyu',
-    name: '남구 북측 자유통로',
+    name: '남측 북쪽 자유통로',
     nameJa: '渋谷駅南口北側自由通路',
     kind: 'passage',
     operator: 'passage',
@@ -510,7 +525,7 @@ const passages: CuratedPlace[] = [
 const planned: CuratedPlace[] = [
   {
     id: 'plan-skyway',
-    name: '동구 4층 스카이웨이 (공사중)',
+    name: '동측 4층 스카이웨이 (공사중)',
     nameJa: '東口4階スカイウェイ',
     kind: 'passage',
     operator: 'passage',
@@ -523,7 +538,7 @@ const planned: CuratedPlace[] = [
     ],
     width: 8,
     planned: true,
-    desc: '긴자선 승강장 지붕 위를 지나는 전장 약 115m·폭 약 8m 의 공중 보행 데크. 완성되면 스크램블스퀘어 중앙동 4층과 서구 어반코어에 접속해 하치공 광장·마크시티까지 한 번에 이어진다. 2030년도 공용 개시 목표.',
+    desc: '긴자선 승강장 지붕 위를 지나는 전장 약 115m·폭 약 8m 의 공중 보행 데크. 완성되면 스크램블스퀘어 중앙동 4층과 서측 어반코어에 접속해 하치코 광장·마크시티까지 한 번에 이어진다. 2030년도 공용 개시 목표.',
     tags: { 목표: '2030년도' },
   },
   {
@@ -539,14 +554,14 @@ const planned: CuratedPlace[] = [
   },
   {
     id: 'plan-urban-core-west',
-    name: '서구 어반코어 (공사중)',
+    name: '서측 어반코어 (공사중)',
     nameJa: '西口アーバン・コア',
     kind: 'passage',
     operator: 'passage',
     level: 4,
     at: [35.65888, 139.70120],
     planned: true,
-    desc: '하치공 광장 지상과 중앙동 4층을 잇는 에스컬레이터·엘리베이터 수직 이동축. 시부야 특유의 고저차를 해소하는 장치로 2033년도 완성 예정.',
+    desc: '하치코 광장 지상과 중앙동 4층을 잇는 에스컬레이터·엘리베이터 수직 이동축. 시부야 특유의 고저차를 해소하는 장치로 2033년도 완성 예정.',
     tags: { 목표: '2033년도' },
   },
   {
@@ -558,7 +573,7 @@ const planned: CuratedPlace[] = [
     level: 4,
     at: [35.65875, 139.70143],
     planned: true,
-    desc: '제2기 공사. 완성되면 JR 시부야역 바로 위 중앙동 4층이 스카이웨이·서구 어반코어와 접속한다. 2033년도 준공 예정으로 시부야 재개발의 마지막 조각.',
+    desc: '제2기 공사. 완성되면 JR 시부야역 바로 위 중앙동 4층이 스카이웨이·서측 어반코어와 접속한다. 2033년도 준공 예정으로 시부야 재개발의 마지막 조각.',
     tags: { 목표: '2033년도' },
   },
 ];
@@ -599,7 +614,7 @@ export const CURATED_LINKS: CuratedLink[] = [
   { from: 'conc-b4-transfer', to: 'gate-ty-miyachuo', kind: 'escalator', note: 'B4 → B2' },
   { from: 'conc-b4-transfer', to: 'gate-ty-miyahigashi', kind: 'escalator', note: 'B4 → B2' },
 
-  // 다마엔토시 · 한조몬
+  // 덴엔토시 · 한조몬
   { from: 'plat-dt-hanzomon', to: 'gate-dt-hachiko', kind: 'escalator', note: 'B3 → B2' },
   { from: 'plat-dt-hanzomon', to: 'gate-dt-dogenzaka', kind: 'escalator', note: 'B3 → B2' },
   { from: 'plat-dt-hanzomon', to: 'gate-ty-miyachuo', kind: 'escalator', note: 'B3 → B2, 공용 개찰' },
@@ -655,7 +670,7 @@ export const CURATED_LINKS: CuratedLink[] = [
   { from: 'gate-jr-hachiko', to: 'plaza-hachiko', kind: 'elevator', note: '같은 지상 레벨' },
   { from: 'pass-nishi-deck', to: 'plaza-hachiko', kind: 'elevator', note: '2F ↔ 지상 엘리베이터' },
   { from: 'gate-keio-chuo', to: 'pass-markcity-free', kind: 'elevator', note: '마크시티 2F 평면' },
-  { from: 'pass-markcity-free', to: 'plaza-hachiko', kind: 'elevator', note: '마크시티 2F ↔ 하치공 광장 엘리베이터' },
+  { from: 'pass-markcity-free', to: 'plaza-hachiko', kind: 'elevator', note: '마크시티 2F ↔ 하치코 광장 엘리베이터' },
   { from: 'gate-jr-chuo', to: 'pass-nishi-deck', kind: 'elevator', note: '3F ↔ 2F 엘리베이터' },
   { from: 'gate-jr-shinminami', to: 'pass-minami-kita-jiyu', kind: 'elevator', note: '개찰 정면 평면' },
 
@@ -663,28 +678,31 @@ export const CURATED_LINKS: CuratedLink[] = [
    * 주요 건물과 역의 접속. 건물 지점은 OSM 발자국의 중심점이라 거리가
    * 실제 개찰~입구 도보 거리와 정확히 같지는 않지만, 접속 관계 자체는 실제다.
    */
-  { from: 'bldg-scramble-square', to: 'gate-jr-chuo', kind: 'walk', note: '3층 직결' },
-  { from: 'bldg-scramble-square', to: 'gate-gz-scramble', kind: 'walk', note: '3층 직결' },
-  { from: 'bldg-scramble-square', to: 'plaza-east-underground', kind: 'elevator', note: '지하 2층 직결' },
-  { from: 'bldg-scramble-square', to: 'pass-ss-stream', kind: 'walk' },
-  { from: 'bldg-scramble-square', to: 'pass-ss-hikarie', kind: 'walk' },
-  { from: 'bldg-hikarie', to: 'gate-ty-hikarie1', kind: 'elevator', note: '지하 3층 직결' },
-  { from: 'bldg-hikarie', to: 'gate-ty-hikarie2', kind: 'elevator', note: '지하 3층 직결' },
-  { from: 'bldg-hikarie', to: 'pass-ss-hikarie', kind: 'walk', note: '2층 연결통로' },
-  { from: 'bldg-stream', to: 'pass-ss-stream', kind: 'walk', note: '3층 데크' },
-  { from: 'bldg-stream', to: 'pass-minami-kita-jiyu', kind: 'walk', note: '자유통로 동쪽 끝' },
-  { from: 'bldg-stream-hall', to: 'bldg-stream', kind: 'walk' },
-  { from: 'bldg-fukuras', to: 'pass-nishi-deck', kind: 'walk', note: '2층 접속 데크' },
-  { from: 'bldg-fukuras', to: 'pass-nishi-hodo', kind: 'walk', note: '건물 내부 통로' },
-  { from: 'bldg-markcity-east', to: 'pass-markcity-free', kind: 'walk', note: '2층 자유통로' },
-  { from: 'bldg-markcity-east', to: 'gate-keio-chuo', kind: 'walk', note: '중앙구 직결' },
-  { from: 'bldg-sakura-shibuya', to: 'pass-minami-kita-jiyu', kind: 'walk', note: '자유통로 서쪽 끝' },
-  { from: 'bldg-sakura-central', to: 'bldg-sakura-shibuya', kind: 'walk' },
-  { from: 'bldg-sakura-central', to: 'bldg-sakura-sakura', kind: 'walk' },
-  { from: 'bldg-sakura-shibuya', to: 'pass-minami-kosen', kind: 'walk', note: '남쪽 육교 서쪽 끝' },
-  { from: 'bldg-station-shinminami', to: 'gate-jr-shinminami', kind: 'walk' },
-  { from: 'bldg-station-main', to: 'gate-jr-hachiko', kind: 'walk' },
-  { from: 'bldg-station-main', to: 'plaza-hachiko', kind: 'walk' },
+  { from: 'bldg-scramble-square@3', to: 'gate-jr-chuo', kind: 'walk', note: '3층 직결' },
+  { from: 'bldg-scramble-square@3', to: 'gate-gz-scramble', kind: 'walk', note: '3층 직결' },
+  { from: 'bldg-scramble-square@3', to: 'pass-ss-stream', kind: 'walk', note: '3층 데크' },
+  { from: 'bldg-scramble-square@2', to: 'pass-ss-hikarie', kind: 'walk', note: '2층 연결통로' },
+  { from: 'bldg-scramble-square@-2', to: 'plaza-east-underground', kind: 'walk', note: '지하 2층 직결' },
+  { from: 'bldg-hikarie@-3', to: 'gate-ty-hikarie1', kind: 'walk', note: '지하 3층 직결' },
+  { from: 'bldg-hikarie@-3', to: 'gate-ty-hikarie2', kind: 'walk', note: '지하 3층 직결' },
+  { from: 'bldg-hikarie@2', to: 'pass-ss-hikarie', kind: 'walk', note: '2층 연결통로' },
+  { from: 'bldg-stream@3', to: 'pass-ss-stream', kind: 'walk', note: '3층 데크' },
+  { from: 'bldg-stream@3', to: 'pass-minami-kita-jiyu', kind: 'walk', note: '자유통로 동쪽 끝' },
+  { from: 'bldg-stream-hall@1', to: 'bldg-stream@1', kind: 'walk' },
+  { from: 'bldg-fukuras@2', to: 'pass-nishi-deck', kind: 'walk', note: '2층 접속 데크' },
+  { from: 'bldg-fukuras@2', to: 'pass-nishi-hodo', kind: 'walk', note: '건물 내부 통로' },
+  { from: 'bldg-markcity-east@2', to: 'pass-markcity-free', kind: 'walk', note: '2층 자유통로' },
+  { from: 'bldg-markcity-east@2', to: 'gate-keio-chuo', kind: 'walk', note: '중앙 출입구 직결' },
+  { from: 'bldg-markcity-east@4', to: 'gate-keio-avenue', kind: 'walk', note: 'WEST 4층 아베뉴 출입구' },
+  { from: 'bldg-sakura-shibuya@3', to: 'pass-minami-kita-jiyu', kind: 'walk', note: '자유통로 서쪽 끝' },
+  { from: 'bldg-sakura-shibuya@3', to: 'pass-minami-kosen', kind: 'walk', note: '남쪽 육교 서쪽 끝' },
+  { from: 'bldg-sakura-central@3', to: 'bldg-sakura-shibuya@3', kind: 'walk' },
+  { from: 'bldg-sakura-central@3', to: 'bldg-sakura-sakura@3', kind: 'walk' },
+  { from: 'bldg-station-shinminami@3', to: 'gate-jr-shinminami', kind: 'walk' },
+  { from: 'bldg-station-main@1', to: 'gate-jr-hachiko', kind: 'walk' },
+  { from: 'bldg-station-main@1', to: 'plaza-hachiko', kind: 'walk' },
+  { from: 'bldg-station-main@2', to: 'pass-nishi-deck', kind: 'walk', note: '2층 서측 데크' },
+  { from: 'bldg-station-main@3', to: 'gate-jr-chuo', kind: 'walk', note: '3층 중앙개찰' },
 
   // 공사 중 (기본 경로 탐색에서 제외)
   { from: 'plan-skyway', to: 'plan-hikarie-deck', kind: 'walk', planned: true },

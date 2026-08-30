@@ -30,6 +30,14 @@
     <h2>{p.name}</h2>
     {#if p.nameJa}<div class="ja">{p.nameJa}</div>{/if}
     {#if p.desc}<p class="desc">{p.desc}</p>{/if}
+    {#if p.connectLevels?.length}
+      <div class="conn">
+        <span class="clabel">역·통로와 이어지는 층</span>
+        {#each [...p.connectLevels].sort((a, b) => b - a) as lv (lv)}
+          <span class="lvchip">{levelCode(lv)}</span>
+        {/each}
+      </div>
+    {/if}
     {#if p.tags}
       <dl class="tags">
         {#each Object.entries(p.tags) as [k, v] (k)}
@@ -111,6 +119,27 @@
     margin-top: 8px;
     font-size: 11px;
     line-height: 1.65;
+    color: var(--tx2);
+  }
+  .conn {
+    margin-top: 9px;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .clabel {
+    font-size: 9.5px;
+    color: var(--tx3);
+    margin-right: 2px;
+  }
+  .lvchip {
+    font-family: var(--mono);
+    font-size: 9.5px;
+    padding: 1px 5px;
+    border-radius: 3px;
+    background: var(--panel2);
+    border: 1px solid var(--line2);
     color: var(--tx2);
   }
   .tags {

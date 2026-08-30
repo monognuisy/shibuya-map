@@ -47,12 +47,23 @@
     <input type="checkbox" bind:checked={app.barrierFree} />
     계단 · 에스컬레이터 회피 (배리어프리)
   </label>
+  <label class="tog">
+    <input type="checkbox" bind:checked={app.avoidPaidShortcut} />
+    개찰 안쪽을 지름길로 쓰지 않기
+  </label>
 
   {#if app.route}
     {@const r = app.route}
     <div class="summary">
       <div class="big">{formatDuration(r.seconds)}</div>
       <div class="sub">{r.distance} m · 올라감 {r.climb} m · 내려감 {r.descend} m</div>
+      <div class="sub">
+        {#if r.gateCrossings === 0}
+          개찰을 지나지 않습니다
+        {:else}
+          개찰 통과 {r.gateCrossings}회
+        {/if}
+      </div>
       <div class="levels">
         {#each r.levels as lv, i (i)}
           <span class="lvchip">{levelCode(lv)}</span>{#if i < r.levels.length - 1}<span class="arr"
@@ -76,6 +87,7 @@
     <p class="empty">
       선택한 조건으로 이어지는 경로가 없습니다.
       {#if app.barrierFree}배리어프리 조건을 풀면 찾을 수 있습니다.{/if}
+      {#if app.avoidPaidShortcut}개찰 조건을 풀면 찾을 수 있습니다.{/if}
     </p>
   {/if}
 </section>

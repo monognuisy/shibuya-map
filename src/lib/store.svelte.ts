@@ -30,6 +30,8 @@ export class AppState {
   fromId = $state<string | null>('plat-jr-yamanote');
   toId = $state<string | null>('plat-toyoko-fukutoshin-34');
   barrierFree = $state(false);
+  /** 개찰 안쪽을 지름길로 쓰지 않기 */
+  avoidPaidShortcut = $state(false);
 
   query = $state('');
 
@@ -55,9 +57,10 @@ export class AppState {
     const a = this.places.find((p) => p.id === this.fromId);
     const b = this.places.find((p) => p.id === this.toId);
     if (!a || !b) return null;
-    return g.route(a.node, b.node, {
+    return g.route(WalkGraph.nodesOf(a), WalkGraph.nodesOf(b), {
       barrierFree: this.barrierFree,
       includePlanned: this.showPlanned,
+      avoidPaidShortcut: this.avoidPaidShortcut,
     });
   }
 

@@ -1,5 +1,5 @@
 /** 통합 보행 그래프 위의 경로 탐색. */
-import type { EdgeDoc, MapDoc } from './mapdoc';
+import type { EdgeDoc, MapDoc, PlaceDoc } from './mapdoc';
 import { levelZ } from './levels';
 
 export interface RouteOptions {
@@ -7,6 +7,14 @@ export interface RouteOptions {
   barrierFree: boolean;
   /** 공사중 시설을 개통했다고 가정 */
   includePlanned: boolean;
+  /**
+   * 개찰 안쪽을 지름길로 쓰지 않는다.
+   *
+   * 출발·도착이 승강장이면 개찰을 나오고 들어가는 것 자체는 피할 수 없으므로,
+   * 「개찰 안 → 개찰 밖 → 개찰 안」 한 번씩만 허용하고 중간에 다시 개찰 안으로
+   * 들어갔다 나오는 경로를 막는다. 둘 다 개찰 밖이면 개찰 안을 아예 쓰지 않는다.
+   */
+  avoidPaidShortcut: boolean;
 }
 
 export interface RouteStep {
@@ -26,10 +34,14 @@ export interface RouteResult {
   levels: number[];
   climb: number;
   descend: number;
+  /** 개찰 안/밖이 바뀐 횟수 = 개찰 통과 횟수 */
+  gateCrossings: number;
 }
 
+/** 개찰 통과 제약을 위한 진행 단계. 0 → 1 → 2 로만 넘어간다. */
+const PHASES = 3;
+
 export class WalkGraph {
-  /** 노드별 인접 리스트 */
   private adj: { to: number; e: EdgeDoc }[][];
 
   constructor(private doc: MapDoc) {
@@ -44,54 +56,90 @@ export class WalkGraph {
     return this.doc.graph.nodes.length;
   }
 
+  /** 지점이 가진 모든 노드. 건물은 접속 층마다 하나씩 있다. */
+  static nodesOf(p: PlaceDoc): number[] {
+    return p.nodes?.length ? p.nodes : [p.node];
+  }
+
   private usable(e: EdgeDoc, o: RouteOptions): boolean {
     if (e.p && !o.includePlanned) return false;
     if (o.barrierFree && !e.bf) return false;
     return true;
   }
 
-  /** 다익스트라. 비용은 보행 시간(초). */
-  route(from: number, to: number, o: RouteOptions): RouteResult | null {
+  /**
+   * 다익스트라. 비용은 보행 시간(초).
+   * 여러 출발·도착 노드를 받는다(건물처럼 접속점이 여럿인 지점 때문).
+   */
+  route(from: number[], to: number[], o: RouteOptions): RouteResult | null {
     const n = this.nodeCount;
-    if (from < 0 || to < 0 || from >= n || to >= n) return null;
+    const starts = from.filter((i) => i >= 0 && i < n);
+    const goals = new Set(to.filter((i) => i >= 0 && i < n));
+    if (!starts.length || !goals.size) return null;
 
-    const dist = new Float64Array(n).fill(Infinity);
-    const prev = new Int32Array(n).fill(-1);
-    const prevEdge: (EdgeDoc | null)[] = new Array(n).fill(null);
-    const done = new Uint8Array(n);
-    dist[from] = 0;
+    // 개찰 제약이 없으면 단계는 하나뿐이다.
+    const phases = o.avoidPaidShortcut ? PHASES : 1;
+    const idx = (node: number, ph: number) => node * phases + ph;
+
+    const size = n * phases;
+    const dist = new Float64Array(size).fill(Infinity);
+    const prev = new Int32Array(size).fill(-1);
+    const prevEdge: (EdgeDoc | null)[] = new Array(size).fill(null);
+    const done = new Uint8Array(size);
 
     const heap = new BinaryHeap();
-    heap.push(from, 0);
+    for (const s of starts) {
+      const k = idx(s, 0);
+      if (dist[k] !== 0) {
+        dist[k] = 0;
+        heap.push(k, 0);
+      }
+    }
 
+    let end = -1;
     while (heap.size) {
       const cur = heap.pop()!;
       if (done[cur]) continue;
       done[cur] = 1;
-      if (cur === to) break;
-      for (const { to: nb, e } of this.adj[cur]!) {
-        if (done[nb] || !this.usable(e, o)) continue;
+      const node = Math.floor(cur / phases);
+      const ph = cur % phases;
+      if (goals.has(node)) {
+        end = cur;
+        break;
+      }
+      for (const { to: nb, e } of this.adj[node]!) {
+        if (!this.usable(e, o)) continue;
+        const nextPh = phases === 1 ? 0 : nextPhase(ph, Boolean(e.paid));
+        if (nextPh < 0) continue;
+        const k = idx(nb, nextPh);
+        if (done[k]) continue;
         const nd = dist[cur]! + e.s;
-        if (nd < dist[nb]!) {
-          dist[nb] = nd;
-          prev[nb] = cur;
-          prevEdge[nb] = e;
-          heap.push(nb, nd);
+        if (nd < dist[k]!) {
+          dist[k] = nd;
+          prev[k] = cur;
+          prevEdge[k] = e;
+          heap.push(k, nd);
         }
       }
     }
 
-    if (!Number.isFinite(dist[to]!)) return null;
+    if (end < 0) return null;
 
     const nodes: number[] = [];
     const steps: RouteStep[] = [];
-    for (let cur = to; cur !== -1; cur = prev[cur]!) {
-      nodes.push(cur);
+    for (let cur = end; cur !== -1; cur = prev[cur]!) {
+      nodes.push(Math.floor(cur / phases));
       const e = prevEdge[cur];
-      if (e && prev[cur] !== -1) {
-        steps.push({ edge: e, from: prev[cur]!, to: cur, seconds: e.s, distance: e.d });
+      const p = prev[cur]!;
+      if (e && p !== -1) {
+        steps.push({
+          edge: e,
+          from: Math.floor(p / phases),
+          to: Math.floor(cur / phases),
+          seconds: e.s,
+          distance: e.d,
+        });
       }
-      if (cur === from) break;
     }
     nodes.reverse();
     steps.reverse();
@@ -109,14 +157,20 @@ export class WalkGraph {
       }
     }
 
+    let gateCrossings = 0;
+    for (let i = 1; i < steps.length; i++) {
+      if (Boolean(steps[i]!.edge.paid) !== Boolean(steps[i - 1]!.edge.paid)) gateCrossings++;
+    }
+
     return {
       steps,
       nodes,
-      seconds: Math.round(dist[to]!),
+      seconds: Math.round(dist[end]!),
       distance: Math.round(steps.reduce((a, s) => a + s.distance, 0)),
       levels,
       climb: Math.round(climb),
       descend: Math.round(descend),
+      gateCrossings,
     };
   }
 
@@ -138,7 +192,17 @@ export class WalkGraph {
   }
 }
 
-/** 최소 힙. n 이 수천 규모라 배열 기반으로 충분하다. */
+/**
+ * 개찰 안(`paid`)·밖(free) 을 오가는 순서를 `안* 밖* 안*` 으로 제한한다.
+ * 허용되지 않는 전이는 -1.
+ */
+function nextPhase(phase: number, paid: boolean): number {
+  if (phase === 0) return paid ? 0 : 1;
+  if (phase === 1) return paid ? 2 : 1;
+  return paid ? 2 : -1;
+}
+
+/** 최소 힙. n 이 1만 규모라 배열 기반으로 충분하다. */
 class BinaryHeap {
   private ids: number[] = [];
   private ws: number[] = [];

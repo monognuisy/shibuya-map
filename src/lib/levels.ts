@@ -16,13 +16,13 @@ export interface LevelDef {
 
 export const LEVELS: readonly LevelDef[] = [
   { id: 5, code: '5F', label: '마크시티 버스터미널', z: 22.0 },
-  { id: 4, code: '4F', label: '스카이웨이(공사중) · 아베뉴구', z: 17.0 },
+  { id: 4, code: '4F', label: '스카이웨이(공사중) · 아베뉴 출입구', z: 17.0 },
   { id: 3, code: '3F', label: '긴자선 · JR 중앙/신남개찰', z: 12.0 },
-  { id: 2, code: '2F', label: '서구 데크 · 이노카시라선', z: 6.5 },
-  { id: 1, code: '1F', label: '하치공 광장 · 스크램블 교차로', z: 0.0 },
+  { id: 2, code: '2F', label: '서측 데크 · 이노카시라선', z: 6.5 },
+  { id: 1, code: '1F', label: '하치코 광장 · 스크램블 교차로', z: 0.0 },
   { id: -1, code: 'B1', label: '시부치카 지하상가', z: -6.0 },
   { id: -2, code: 'B2', label: '미야마스자카 · 하치코개찰', z: -12.0 },
-  { id: -3, code: 'B3', label: '다마엔토시선 · 히카리에개찰', z: -18.5 },
+  { id: -3, code: 'B3', label: '덴엔토시선 · 히카리에개찰', z: -18.5 },
   { id: -4, code: 'B4', label: '환승 콘코스', z: -24.0 },
   { id: -5, code: 'B5', label: '도요코선 · 후쿠토신선', z: -30.0 },
 ];

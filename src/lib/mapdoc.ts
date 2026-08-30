@@ -53,8 +53,14 @@ export interface PlaceDoc {
   planned?: boolean;
   provenance: Provenance;
   tags?: Record<string, string>;
-  /** graph.nodes 인덱스 */
+  /** graph.nodes 인덱스 (대표) */
   node: number;
+  /** 이 지점에 속한 모든 노드. 건물은 접속 층마다 하나씩 있다. */
+  nodes?: number[];
+  /** 개찰 안쪽 */
+  paid?: boolean;
+  /** 건물이 바깥과 이어지는 층 */
+  connectLevels?: number[];
 }
 
 export type EdgeSource = 'mlit' | 'osm' | 'curated';
@@ -69,6 +75,8 @@ export interface EdgeDoc {
   s: number;
   /** 배리어프리 1/0 */
   bf: 0 | 1;
+  /** 개찰 안쪽(유료 구역)을 지나는 링크 */
+  paid?: 1;
   src: EdgeSource;
   /** 공사중 */
   p?: 1;

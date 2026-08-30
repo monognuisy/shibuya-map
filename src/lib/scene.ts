@@ -252,7 +252,11 @@ export class MapScene {
     );
   }
 
-  /** 폴리곤을 위로 뽑아 올린다. 두께 1 로 만들고 scale.y 로 높이를 준다. */
+  /**
+   * 폴리곤을 위로 뽑아 올린다. 두께 1 로 만들어 두고 `scale.z` 로 높이를 준다.
+   * ExtrudeGeometry 는 shape 로컬 +Z 로 뽑히고 `rotation.x = -90°` 는 스케일
+   * *뒤에* 적용되므로, 여기서 scale.y 를 주면 위가 아니라 남북으로 늘어난다.
+   */
   private prismOf(ring: XY[]): THREE.ExtrudeGeometry {
     return new THREE.ExtrudeGeometry(
       new THREE.Shape(ring.map((p) => new THREE.Vector2(p[0], p[1]))),
@@ -392,7 +396,7 @@ export class MapScene {
     for (const ring of p.footprints!) {
       const mesh = new THREE.Mesh(this.prismOf(ring), mat);
       mesh.rotation.x = -Math.PI / 2;
-      mesh.scale.y = p.kind === 'passage' ? 1.6 : 2.6;
+      mesh.scale.z = p.kind === 'passage' ? 1.6 : 2.6;
       g.add(mesh);
       const pts = ring.map((q) => new THREE.Vector3(q[0], 0.1, -q[1]));
       g.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), lineMat));
@@ -400,30 +404,42 @@ export class MapScene {
     return g;
   }
 
-  /** 주요 건물: 발자국을 실제 높이만큼(또는 낮게 눌러) 세운다. */
+  /**
+   * 주요 건물: 발자국을 실제 높이만큼(또는 낮게 눌러) 세운다.
+   *
+   * 면만 있으면 어두운 배경에서 실루엣이 거의 보이지 않으므로, 압출 지오메트리의
+   * 모서리를 같은 회전·스케일로 함께 그린다. `EdgesGeometry` 의 임계각을 크게 잡아
+   * 윗면 삼각분할선은 빼고 수직 모서리와 위·아래 링만 남긴다.
+   */
   private buildingFeature(p: PlaceDoc, color: number): THREE.Object3D {
+    if (!p.footprints?.length) return this.pointFeature(p, color);
     const g = new THREE.Group();
+
     const mat = new THREE.MeshLambertMaterial({
-      color: p.planned ? 0x4a5464 : 0x35424f,
+      color: p.planned ? 0x4a5464 : 0x39485a,
       transparent: true,
-      opacity: 0.5,
+      opacity: 0.42,
       side: THREE.DoubleSide,
+      depthWrite: false,
     });
     const lineMat = new THREE.LineBasicMaterial({
-      color: 0x7f8fa3,
+      color: p.planned ? 0x7a8496 : 0x92a4ba,
       transparent: true,
-      opacity: 0.85,
+      opacity: 0.75,
     });
-    for (const ring of p.footprints ?? []) {
-      const mesh = new THREE.Mesh(this.prismOf(ring), mat);
+
+    for (const ring of p.footprints) {
+      const geo = this.prismOf(ring);
+      const mesh = new THREE.Mesh(geo, mat);
       mesh.rotation.x = -Math.PI / 2;
       mesh.userData.buildingPrism = true;
       g.add(mesh);
-      const pts = ring.map((q) => new THREE.Vector3(q[0], 0.1, -q[1]));
-      g.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), lineMat));
+
+      const edges = new THREE.LineSegments(new THREE.EdgesGeometry(geo, 20), lineMat);
+      edges.rotation.x = -Math.PI / 2;
+      edges.userData.buildingPrism = true;
+      g.add(edges);
     }
-    g.userData.realHeight = p.height ?? 24;
-    void color;
     return g;
   }
 
@@ -527,9 +543,9 @@ export class MapScene {
       setOpacity(mesh, this.placeOnActiveLevel(place, s) || place.id === s.selectedId ? 1 : dim);
 
       if (place.kind === 'building') {
-        const h = s.realHeights ? Math.min(place.height ?? 24, 160) * 0.55 : 16;
+        const h = s.realHeights ? (place.height ?? 24) : 16;
         mesh.traverse((o) => {
-          if (o.userData.buildingPrism) o.scale.y = h;
+          if (o.userData.buildingPrism) o.scale.z = h;
         });
       }
     }

@@ -90,6 +90,8 @@ interface GEdge {
   d: number;
   s: number;
   bf: boolean;
+  /** 개찰 안쪽(유료 구역)을 지나는 링크인가 */
+  paid?: boolean;
   src: Src;
   planned?: boolean;
   /** 중간 형상 (있을 때만) */
@@ -403,7 +405,20 @@ interface PlaceOut {
   planned?: boolean;
   provenance: string;
   tags?: Record<string, string>;
+  /** 대표 노드 */
   node: number;
+  /** 이 지점에 속한 모든 그래프 노드 (건물은 접속 층마다 하나씩) */
+  nodes?: number[];
+  /** 개찰 안쪽 */
+  paid?: boolean;
+  /** 건물이 바깥과 이어지는 층 */
+  connectLevels?: number[];
+}
+
+/** `bldg-hikarie@-3` → `bldg-hikarie` */
+function baseId(ref: string): string {
+  const i = ref.indexOf('@');
+  return i < 0 ? ref : ref.slice(0, i);
 }
 
 function loadCurated(external: Map<string, number>): PlaceOut[] {
@@ -432,9 +447,12 @@ function loadCurated(external: Map<string, number>): PlaceOut[] {
       planned: p.planned,
       provenance: 'curated',
       tags: p.tags,
+      paid: p.paid,
       node: n,
     });
   }
+
+  const paidOf = new Map(CURATED_PLACES.map((p) => [p.id, Boolean(p.paid)]));
 
   for (const l of CURATED_LINKS) {
     const a = nodeOf.get(l.from);
@@ -449,6 +467,9 @@ function loadCurated(external: Map<string, number>): PlaceOut[] {
       kind: l.kind,
       d,
       bf: l.barrierFree ?? BARRIER_FREE[l.kind],
+      // 개찰은 경계이므로 개찰 자체는 유료가 아니다. 한쪽 끝이 승강장이나
+      // 개찰 안 콘코스면 그 링크는 개찰 안쪽을 지난다.
+      paid: paidOf.get(baseId(l.from)) || paidOf.get(baseId(l.to)),
       src: 'curated',
       planned: l.planned,
       note: l.note,
@@ -531,15 +552,15 @@ function attachShapes(
 
 /** 출입구 이름. 사업자가 안내에 쓰는 이름/기호를 그대로 살린다. */
 const ENTRANCE_NAMES: Record<string, string> = {
-  ハチ公口: '하치공구',
-  西口: '서구',
-  東口: '동구',
-  南口: '남구',
-  北口: '북구',
-  新南口: '신남구',
+  ハチ公口: '하치코 출입구',
+  西口: '서 출입구',
+  東口: '동 출입구',
+  南口: '남 출입구',
+  北口: '북 출입구',
+  新南口: '신남 출입구',
   新南改札: '신남개찰',
-  宮益坂口: '미야마스자카구',
-  玉川口: '다마가와구',
+  宮益坂口: '미야마스자카 출입구',
+  玉川口: '다마가와 출입구',
   中央改札: '중앙개찰',
 };
 
@@ -556,8 +577,9 @@ function entranceName(name: string | null, ref: string | null): string {
 }
 
 /** 주요 건물과 지상 출입구를 선택 가능한 지점으로 올린다. */
-function emitOsmPlaces(osm: OsmOut): PlaceOut[] {
-  const out: PlaceOut[] = [];
+function emitOsmPlaces(osm: OsmOut): { places: PlaceOut[]; ids: Map<string, number> } {
+  const places: PlaceOut[] = [];
+  const ids = new Map<string, number>();
 
   for (const raw of osm.buildings) {
     const b = raw as {
@@ -571,14 +593,47 @@ function emitOsmPlaces(osm: OsmOut): PlaceOut[] {
     if (!b.landmark) continue;
     const meta = [...LANDMARK_BY_NAME.values()].find((l) => l.id === b.landmark);
     const c = centroid(b.ring);
-    const node = addNode(c.x, c.y, 1, `osmb:${b.id}`);
-    out.push({
+    const connect = meta?.connectLevels?.length ? meta.connectLevels : [1];
+
+    // 접속 층마다 노드를 하나씩 두고, 그 사이를 건물 내부 수직 동선으로 잇는다.
+    const perLevel = connect.map((lv) => ({
+      lv,
+      node: addNode(c.x, c.y, lv, `osmb:${b.id}@${lv}`),
+    }));
+    for (const { lv, node } of perLevel) {
+      ids.set(`${b.landmark}@${lv}`, node);
+    }
+    ids.set(b.landmark, perLevel[0]!.node);
+
+    const sorted = [...perLevel].sort((x, y) => x.lv - y.lv);
+    for (let i = 1; i < sorted.length; i++) {
+      const lo = sorted[i - 1]!;
+      const hi = sorted[i]!;
+      const dz = levelZ(hi.lv) - levelZ(lo.lv);
+      const travel = Math.abs(dz) * 1.4;
+      // 건물 안 수직 동선은 EV 와 ES 가 함께 있는 것이 보통이라 둘 다 넣는다.
+      for (const kind of ['elevator', 'escalator'] as LinkKind[]) {
+        addEdge({
+          a: lo.node,
+          b: hi.node,
+          kind,
+          d: travel,
+          bf: BARRIER_FREE[kind],
+          src: 'curated',
+          note: `건물 내부 ${kind === 'elevator' ? '엘리베이터' : '에스컬레이터'}`,
+        });
+      }
+    }
+
+    // 발자국은 지상에 그리므로 대표 층은 1층(있으면), 없으면 가장 낮은 접속 층.
+    const ground = perLevel.find((x) => x.lv === 1) ?? sorted[0]!;
+    places.push({
       id: b.landmark,
       name: meta?.name ?? b.name ?? b.landmark,
       nameJa: b.name ?? undefined,
       kind: 'building',
       operator: 'facility',
-      level: 1,
+      level: ground.lv,
       x: r1(c.x),
       y: r1(c.y),
       footprints: [b.ring],
@@ -586,7 +641,9 @@ function emitOsmPlaces(osm: OsmOut): PlaceOut[] {
       desc: meta?.desc,
       provenance: 'osm',
       tags: meta?.tags,
-      node,
+      connectLevels: connect,
+      node: ground.node,
+      nodes: perLevel.map((x) => x.node),
     });
   }
 
@@ -609,7 +666,7 @@ function emitOsmPlaces(osm: OsmOut): PlaceOut[] {
         { yes: '가능', no: '불가', limited: '일부 가능' }[e.wheelchair] ?? e.wheelchair;
     }
     if (e.name) tags['원표기'] = e.name;
-    out.push({
+    places.push({
       id: e.id.replace(':', '-'),
       name: entranceName(e.name, e.ref),
       nameJa: e.name ?? undefined,
@@ -619,16 +676,15 @@ function emitOsmPlaces(osm: OsmOut): PlaceOut[] {
       x: e.x,
       y: e.y,
       desc:
-        e.railway === 'subway_entrance'
-          ? '지하철 지상 출입구입니다.'
-          : '역 지상 출입구입니다.',
+        e.railway === 'subway_entrance' ? '지하철 지상 출입구입니다.' : '역 지상 출입구입니다.',
       provenance: 'osm',
       tags: Object.keys(tags).length ? tags : undefined,
       node,
+      nodes: [node],
     });
   }
 
-  return out;
+  return { places, ids };
 }
 
 /* ───────────────────────────────────────────── 4. 레이어 간 접합(스냅) */
@@ -641,13 +697,19 @@ function emitOsmPlaces(osm: OsmOut): PlaceOut[] {
  * 더 넓게 잡아야 지상 보행망에 닿는다. 층 차이가 큰 곳끼리 잘못 이어지지
  * 않도록 같은 층(±0.5) 안에서만 후보를 찾는다.
  */
-function stitch(radii: { mlit: number; curated: number; building: number }): number {
+function stitch(
+  radii: { mlit: number; curated: number; building: number },
+  paidNodes: Set<number>,
+): number {
   const osmNodes = nodes.filter((n) => nodeKeyOf(n.i)?.startsWith('osm:'));
   let made = 0;
 
   for (const n of nodes) {
     const key = nodeKeyOf(n.i);
     if (!key || key.startsWith('osm:')) continue;
+    // 승강장·개찰 안 콘코스를 바깥 보도에 바로 붙이면 개찰을 통과하지 않고
+    // 승강장으로 들어가는 가짜 경로가 생긴다.
+    if (paidNodes.has(n.i)) continue;
     const maxDist = key.startsWith('mlit:')
       ? radii.mlit
       : key.startsWith('osmb:')
@@ -752,16 +814,19 @@ async function main() {
   const mlit = await loadMlit();
   const osm = await loadOsm();
   // 건물·출입구를 먼저 올려야 curated 링크가 이들을 끝점으로 참조할 수 있다.
-  const osmPlaces = emitOsmPlaces(osm);
-  const places = loadCurated(new Map(osmPlaces.map((p) => [p.id, p.node])));
+  const emitted = emitOsmPlaces(osm);
+  const places = loadCurated(emitted.ids);
   const shapesMatched = attachShapes(
     places,
     osm.platformShapes as { level: number; ring: [number, number][] }[],
   );
-  places.push(...osmPlaces);
+  places.push(...emitted.places);
 
   for (const [k, v] of nodeKey) keyOfNode.set(v, k);
-  const stitched = stitch({ mlit: 12, curated: 45, building: 140 });
+  const stitched = stitch(
+    { mlit: 12, curated: 45, building: 140 },
+    new Set(places.filter((p) => p.paid).map((p) => p.node)),
+  );
 
   const comp = largestComponent();
 
@@ -823,6 +888,7 @@ async function main() {
         d: e.d,
         s: e.s,
         bf: e.bf ? 1 : 0,
+        ...(e.paid ? { paid: 1 as const } : {}),
         src: e.src,
         ...(e.planned ? { p: 1 } : {}),
         ...(e.note ? { n: e.note } : {}),

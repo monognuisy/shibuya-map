@@ -8,10 +8,10 @@ const graph = new WalkGraph(doc);
 const placeOf = (id: string) => {
   const p = doc.places.find((q) => q.id === id);
   if (!p) throw new Error(`no place ${id}`);
-  return p.node;
+  return WalkGraph.nodesOf(p);
 };
 
-const opts = { barrierFree: false, includePlanned: false };
+const opts = { barrierFree: false, includePlanned: false, avoidPaidShortcut: false };
 
 describe('경로 탐색', () => {
   it('야마노테선 승강장 → 도요코선 승강장 경로가 존재하고 층을 넘나든다', () => {
@@ -22,11 +22,11 @@ describe('경로 탐색', () => {
     expect(new Set(r!.levels).size).toBeGreaterThan(2);
   });
 
-  it('모든 curated 지점이 하치공 광장에서 도달 가능', () => {
+  it('모든 curated 지점이 하치코 광장에서 도달 가능', () => {
     const start = placeOf('plaza-hachiko');
     const unreachable = doc.places
       .filter((p) => !p.planned)
-      .filter((p) => graph.route(start, p.node, opts) === null)
+      .filter((p) => graph.route(start, WalkGraph.nodesOf(p), opts) === null)
       .map((p) => p.id);
     expect(unreachable).toEqual([]);
   });
@@ -35,6 +35,7 @@ describe('경로 탐색', () => {
     const r = graph.route(placeOf('plaza-hachiko'), placeOf('gate-jr-chuo'), {
       barrierFree: true,
       includePlanned: false,
+      avoidPaidShortcut: false,
     });
     if (r) {
       expect(r.steps.every((s) => s.edge.bf === 1)).toBe(true);
@@ -42,7 +43,7 @@ describe('경로 탐색', () => {
   });
 
   it('주요 승강장 사이는 배리어프리 경로가 존재한다', () => {
-    const bf = { barrierFree: true, includePlanned: false };
+    const bf = { barrierFree: true, includePlanned: false, avoidPaidShortcut: false };
     const pairs: [string, string][] = [
       ['plat-jr-yamanote', 'plat-toyoko-fukutoshin-34'],
       ['plat-inokashira', 'plat-dt-hanzomon'],
@@ -55,10 +56,50 @@ describe('경로 탐색', () => {
     }
   });
 
+  it('개찰 밖 두 지점은 개찰 안을 지나지 않고 이어진다', () => {
+    const r = graph.route(placeOf('plaza-hachiko'), placeOf('bldg-hikarie'), {
+      ...opts,
+      avoidPaidShortcut: true,
+    });
+    expect(r).not.toBeNull();
+    expect(r!.steps.some((s) => s.edge.paid)).toBe(false);
+    expect(r!.gateCrossings).toBe(0);
+  });
+
+  it('승강장 사이 경로는 개찰을 두 번만 지난다', () => {
+    const r = graph.route(placeOf('plat-jr-yamanote'), placeOf('plat-toyoko-fukutoshin-34'), {
+      ...opts,
+      avoidPaidShortcut: true,
+    });
+    expect(r).not.toBeNull();
+    expect(r!.gateCrossings).toBeLessThanOrEqual(2);
+  });
+
+  it('승강장은 개찰을 거치지 않고 거리에서 바로 닿지 않는다', () => {
+    const plat = placeOf('plat-jr-yamanote');
+    const paidEdges = doc.graph.edges.filter((e) => e.paid);
+    // 승강장 노드에 붙은 링크는 전부 개찰 안쪽이어야 한다
+    for (const n of plat) {
+      const touching = doc.graph.edges.filter((e) => e.a === n || e.b === n);
+      expect(touching.length).toBeGreaterThan(0);
+      expect(touching.every((e) => e.paid === 1)).toBe(true);
+    }
+    expect(paidEdges.length).toBeGreaterThan(0);
+  });
+
+  it('건물은 접속 층마다 노드를 갖는다', () => {
+    const b = doc.places.find((p) => p.id === 'bldg-scramble-square')!;
+    expect(b.connectLevels).toEqual([3, 2, 1, -2]);
+    expect(WalkGraph.nodesOf(b)).toHaveLength(4);
+    const levels = WalkGraph.nodesOf(b).map((n) => doc.graph.nodes[n]![2]);
+    expect(new Set(levels)).toEqual(new Set([3, 2, 1, -2]));
+  });
+
   it('공사중 링크는 기본 옵션에서 제외된다', () => {
     const withPlanned = graph.route(placeOf('plaza-hachiko'), placeOf('plan-skyway'), {
       barrierFree: false,
       includePlanned: true,
+      avoidPaidShortcut: false,
     });
     const without = graph.route(placeOf('plaza-hachiko'), placeOf('plan-skyway'), opts);
     expect(withPlanned).not.toBeNull();
