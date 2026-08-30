@@ -98,9 +98,16 @@
     }
   });
 
-  // 따라가기 카메라
+  /*
+   * 따라가기 카메라.
+   *
+   * `scene?.setFollow(app.navT)` 로 쓰면 안 된다. 씬이 아직 null 인 첫 실행에서
+   * 옵셔널 체이닝이 먼저 끊어져 `app.navT` 를 읽지 못하고, 그러면 이 이펙트는
+   * 의존성을 하나도 등록하지 못해 두 번 다시 실행되지 않는다.
+   */
   $effect(() => {
-    scene?.setFollow(app.navT);
+    const t = app.navT;
+    scene?.setFollow(t);
   });
 
   // 따라가기에 들어가면 시점을 가깝게 낮춘다
