@@ -143,15 +143,26 @@ shibuya-map/
 ## 6. 작업 순서
 
 - [x] 0. 오픈데이터 존재 여부 조사 → 실내지도 부재 확인, 보행공간 네트워크 확보
-- [ ] 1. `git init` + 프로젝트 스캐폴딩 (Astro + Svelte 5 + TS)
-- [ ] 2. `scripts/fetch.ts` — A/B/C 취득, `meta.json` 에 출처·해시 기록
-- [ ] 3. `src/lib/geo.ts` — ENU 투영 + 단위 테스트
-- [ ] 4. `scripts/build.ts` — raw → `network.json` / `buildings.json`, 연결성 검증
-- [ ] 5. curated 역 구내 레이어를 실좌표로 작성 (프로토타입 46노드 이관 + 폴리라인화)
-- [ ] 6. three.js 씬 — 건물 압출 / 층 스택 / 통로 튜브
-- [ ] 7. UI — 층 레일, 필터, Inspector, 범례
-- [ ] 8. 경로 탐색 + 결과 패널
-- [ ] 9. 라이선스·출처 표기 화면, README, 배포 설정
+- [x] 1. `git init` + 프로젝트 스캐폴딩 (Astro 5 + Svelte 5 + TS)
+- [x] 2. `scripts/fetch.ts` — A/B/C 취득, `sources.json` 에 출처·취득일시·sha256 기록
+- [x] 3. `src/lib/geo.ts` — ENU 투영 + 왕복/측지거리 대조 테스트
+- [x] 4. `scripts/build.ts` — raw → `map.json`, 레이어 접합과 연결성 검증
+      (주 네트워크에 닿지 않는 curated 지점이 있으면 빌드 실패)
+- [x] 5. curated 역 구내 레이어를 실좌표로 작성.
+      승강장 선형은 OSM 궤도·승강장 폴리곤에 앵커링, 통로는 폴리라인 → 폴리곤
+- [x] 6. three.js 씬 — 층 스택, 실제 폴리곤 슬래브, 주요 건물 압출, 수선
+- [x] 7. UI — 층 레일, 레이어/사업자 필터, Inspector, 출처 시트
+- [x] 8. 경로 탐색 + 결과 패널 (배리어프리 · 공사중 포함 옵션)
+- [x] 9. 출처 표기 화면, README, GitHub Pages 배포 워크플로
+
+### 이후 할 만한 것
+
+- [ ] curated 개찰·광장을 대표점 하나가 아니라 폴리곤/다중 출입점으로 확장
+      (지금은 그 지점을 지나는 경로 거리가 실제보다 짧게 나올 수 있음)
+- [ ] 층 표고를 각 사업자 단면 자료로 보정
+- [ ] PLATEAU 3D도시모델(渋谷区)로 건물 높이·형상 보강 (CityGML 650MB → 시부야역
+      주변만 잘라내는 전처리 필요)
+- [ ] 혼잡 시간대 가중치, 도착 시각 기반 안내
 
 ---
 

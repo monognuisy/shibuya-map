@@ -1,5 +1,7 @@
 node_modules/
 dist/
+# data:build 로 언제든 재생성된다 (원본은 data/raw 에 커밋되어 있음)
+public/data/
 .astro/
 .DS_Store
 *.log

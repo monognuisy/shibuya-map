@@ -14,7 +14,7 @@ export class AppState {
   layers = $state({
     curated: true,
     landmarks: true,
-    entrances: false,
+    entrances: true,
     mlit: true,
     osm: true,
     buildings: true,

@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "dev": "astro dev",
-    "build": "astro check && astro build",
+    "build": "pnpm data:build && astro check && astro build",
     "preview": "astro preview",
     "data:fetch": "tsx scripts/fetch.ts",
     "data:build": "tsx scripts/build.ts",

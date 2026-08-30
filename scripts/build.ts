@@ -312,6 +312,9 @@ async function loadOsm(): Promise<OsmOut> {
         id: `osm:n${e.id}`,
         name: t.name ?? t['name:ja'] ?? null,
         nameEn: t['name:en'] ?? null,
+        // 시부야역 지하철 출입구는 A0·A5b·B3·C1 같은 기호로 안내된다.
+        ref: t.ref ?? null,
+        wheelchair: t.wheelchair ?? null,
         railway: t.railway,
         x: r1(p.x),
         y: r1(p.y),
@@ -526,6 +529,32 @@ function attachShapes(
   return matched;
 }
 
+/** 출입구 이름. 사업자가 안내에 쓰는 이름/기호를 그대로 살린다. */
+const ENTRANCE_NAMES: Record<string, string> = {
+  ハチ公口: '하치공구',
+  西口: '서구',
+  東口: '동구',
+  南口: '남구',
+  北口: '북구',
+  新南口: '신남구',
+  新南改札: '신남개찰',
+  宮益坂口: '미야마스자카구',
+  玉川口: '다마가와구',
+  中央改札: '중앙개찰',
+};
+
+function entranceName(name: string | null, ref: string | null): string {
+  if (name) {
+    const ko = ENTRANCE_NAMES[name];
+    if (ko) return ref ? `${ko} (${ref})` : ko;
+    // 「渋谷駅」·「渋谷駅8」 처럼 이름만으로는 구분이 안 되는 경우가 대부분이라
+    // 실제 안내에 쓰이는 출구 기호를 앞세운다.
+    if (ref) return `${ref} 출입구`;
+    return name;
+  }
+  return ref ? `${ref} 출입구` : '출입구';
+}
+
 /** 주요 건물과 지상 출입구를 선택 가능한 지점으로 올린다. */
 function emitOsmPlaces(osm: OsmOut): PlaceOut[] {
   const out: PlaceOut[] = [];
@@ -566,22 +595,35 @@ function emitOsmPlaces(osm: OsmOut): PlaceOut[] {
       id: string;
       name: string | null;
       nameEn: string | null;
+      ref: string | null;
+      wheelchair: string | null;
       railway: string;
       x: number;
       y: number;
     };
     const node = addNode(e.x, e.y, 1, `osme:${e.id}`);
+    const tags: Record<string, string> = {};
+    if (e.ref) tags['출구 기호'] = e.ref;
+    if (e.wheelchair) {
+      tags['휠체어'] =
+        { yes: '가능', no: '불가', limited: '일부 가능' }[e.wheelchair] ?? e.wheelchair;
+    }
+    if (e.name) tags['원표기'] = e.name;
     out.push({
       id: e.id.replace(':', '-'),
-      name: e.name ?? e.nameEn ?? '출입구',
+      name: entranceName(e.name, e.ref),
       nameJa: e.name ?? undefined,
       kind: 'entrance',
       operator: e.railway === 'subway_entrance' ? 'metro' : 'jr',
       level: 1,
       x: e.x,
       y: e.y,
-      desc: 'OpenStreetMap 에 등록된 지상 출입구입니다.',
+      desc:
+        e.railway === 'subway_entrance'
+          ? '지하철 지상 출입구입니다.'
+          : '역 지상 출입구입니다.',
       provenance: 'osm',
+      tags: Object.keys(tags).length ? tags : undefined,
       node,
     });
   }
