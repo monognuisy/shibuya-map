@@ -16,6 +16,8 @@ export type Operator = 'jr' | 'metro' | 'tokyu' | 'keio' | 'facility' | 'passage
 export type PlaceKind =
   | 'platform'
   | 'gate'
+  /** 지상 출입구 (OSM subway_entrance / train_station_entrance) */
+  | 'entrance'
   | 'building'
   | 'plaza'
   | 'passage'

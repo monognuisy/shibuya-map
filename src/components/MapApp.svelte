@@ -1,0 +1,221 @@
+<script lang="ts">
+  import { onMount } from 'svelte';
+
+  import { loadMap } from '~/lib/mapdoc';
+  import { MapScene, type LabelBox } from '~/lib/scene';
+  import { AppState } from '~/lib/store.svelte';
+  import { applyUrl, toSearch } from '~/lib/urlstate';
+  import { OPERATOR_COLORS } from '~/lib/palette';
+
+  import Attribution from './Attribution.svelte';
+  import ControlPanel from './ControlPanel.svelte';
+  import Inspector from './Inspector.svelte';
+  import LevelRail from './LevelRail.svelte';
+  import RoutePanel from './RoutePanel.svelte';
+
+  let { dataUrl }: { dataUrl: string } = $props();
+
+  const app = new AppState();
+  let stage: HTMLDivElement;
+  let labelHost: HTMLDivElement;
+  let scene: MapScene | null = null;
+  let labelEls = new Map<string, HTMLElement>();
+
+  onMount(() => {
+    let raf = 0;
+    let cancelled = false;
+
+    loadMap(dataUrl)
+      .then((doc) => {
+        if (cancelled) return;
+        app.doc = doc;
+        applyUrl(app, location.search);
+        scene = new MapScene(stage, doc, app.view, (id) => {
+          app.selectedId = id;
+        });
+        buildLabels(scene.labels);
+        const tick = () => {
+          raf = requestAnimationFrame(tick);
+          if (scene) positionLabels(scene.labels);
+        };
+        tick();
+      })
+      .catch((e: unknown) => {
+        const msg = e instanceof Error ? e.message : String(e);
+        app.error = /WebGL/i.test(msg)
+          ? 'WebGL 을 사용할 수 없습니다. 브라우저의 하드웨어 가속을 켜고 다시 열어 주세요.'
+          : msg;
+      });
+
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(raf);
+      scene?.dispose();
+      scene = null;
+    };
+  });
+
+  // 상태가 바뀌면 씬에 반영
+  $effect(() => {
+    const v = app.view;
+    scene?.setState(v);
+  });
+
+  // 공유 가능한 링크가 되도록 주소창을 상태와 맞춘다 (히스토리는 남기지 않는다)
+  $effect(() => {
+    if (!app.doc) return;
+    const qs = toSearch(app);
+    history.replaceState(null, '', qs ? `?${qs}` : location.pathname);
+  });
+
+  $effect(() => {
+    const id = app.selectedId;
+    if (id) scene?.focus(id);
+  });
+
+  function buildLabels(labels: LabelBox[]) {
+    labelEls = new Map();
+    for (const l of labels) {
+      const el = document.createElement('button');
+      el.className = `lb k-${l.kind}`;
+      el.textContent = l.text;
+      el.style.setProperty(
+        '--op',
+        OPERATOR_COLORS[l.operator as keyof typeof OPERATOR_COLORS] ?? '#8A96A6',
+      );
+      el.addEventListener('click', () => (app.selectedId = l.id));
+      labelHost.appendChild(el);
+      labelEls.set(l.id, el);
+    }
+  }
+
+  /**
+   * 라벨은 매 프레임 위치가 바뀌므로 Svelte 반응성을 태우지 않고 DOM 을 직접 만진다.
+   * 겹치는 라벨은 화면 격자에 한 개만 남겨 밀도를 줄인다.
+   */
+  /** 자리 다툼이 붙었을 때 어떤 라벨을 남길지. 작을수록 우선. */
+  const LABEL_RANK: Record<string, number> = {
+    platform: 0,
+    gate: 1,
+    plaza: 2,
+    passage: 3,
+    building: 4,
+    entrance: 5,
+  };
+
+  function positionLabels(labels: LabelBox[]) {
+    const occupied = new Set<string>();
+    const sorted = [...labels].sort(
+      (a, b) =>
+        (LABEL_RANK[a.kind] ?? 9) - (LABEL_RANK[b.kind] ?? 9) || a.screen.depth - b.screen.depth,
+    );
+    for (const l of sorted) {
+      const el = labelEls.get(l.id);
+      if (!el) continue;
+      const s = l.screen;
+      const onScreen =
+        s.visible &&
+        s.depth < 1 &&
+        s.x > -60 &&
+        s.y > -20 &&
+        s.x < labelHost.clientWidth + 60 &&
+        s.y < labelHost.clientHeight + 20;
+      const cell = `${Math.round(s.x / 132)}:${Math.round(s.y / 26)}`;
+      const selected = app.selectedId === l.id;
+      const show = onScreen && (selected || !occupied.has(cell));
+      if (show && !selected) occupied.add(cell);
+      el.classList.toggle('hide', !show);
+      el.classList.toggle('sel', selected);
+      el.classList.toggle('plan', l.planned);
+      if (show) el.style.transform = `translate(${s.x}px, ${s.y}px) translate(-50%, -50%)`;
+    }
+  }
+</script>
+
+<div class="app">
+  <div class="stage" bind:this={stage}></div>
+  <div class="labels" bind:this={labelHost}></div>
+
+  <header class="pane head">
+    <h1>SHIBUYA STATION</h1>
+    <p class="sub">시부야역 입체 보행 네트워크</p>
+    {#if app.doc}
+      <p class="asof">
+        공식 보행망 {app.doc.meta.counts.mlitLinks} 링크 · OSM {app.doc.meta.counts.osmSegments} 구간
+        · 역 구내 {app.doc.meta.counts.curatedPlaces} 지점
+      </p>
+    {/if}
+  </header>
+
+  {#if app.error}
+    <div class="pane err">지도를 표시할 수 없습니다. <code>{app.error}</code></div>
+  {:else if !app.doc}
+    <div class="pane loading">데이터 로딩 중…</div>
+  {:else}
+    <LevelRail {app} />
+    <ControlPanel {app} onReset={() => scene?.resetView()} />
+    <RoutePanel {app} />
+    <Inspector {app} />
+    <Attribution {app} />
+  {/if}
+</div>
+
+<style>
+  .app {
+    position: fixed;
+    inset: 0;
+  }
+  .stage {
+    position: absolute;
+    inset: 0;
+  }
+  .labels {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .head {
+    position: fixed;
+    top: 14px;
+    left: 14px;
+    padding: 12px 14px;
+    max-width: 288px;
+  }
+  h1 {
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    color: var(--tx);
+    margin: 0;
+  }
+  .sub {
+    font-size: 10.5px;
+    color: var(--tx3);
+    margin: 3px 0 0;
+  }
+  .asof {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--amber);
+    margin: 7px 0 0;
+    letter-spacing: 0.04em;
+  }
+  .loading,
+  .err {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    padding: 14px 18px;
+    font-size: 11px;
+    color: var(--tx2);
+  }
+  .err code {
+    display: block;
+    margin-top: 6px;
+    font-size: 10px;
+    color: var(--tx3);
+  }
+</style>

@@ -633,6 +633,59 @@ export const CURATED_LINKS: CuratedLink[] = [
   { from: 'gate-ty-hikarie2', to: 'plaza-east-underground', kind: 'escalator', note: 'B3 → B2' },
   { from: 'gate-gz-meiji', to: 'plaza-east-underground', kind: 'escalator', note: '1F → B2' },
 
+  /*
+   * 엘리베이터. 각 사업자가 공표한 배리어프리 경로(엘리베이터로 지상까지
+   * 이동 가능한 경로)를 기준으로 넣었다. 배리어프리 탐색은 이 링크들만 쓴다.
+   */
+  { from: 'plat-jr-yamanote', to: 'gate-jr-chuo', kind: 'elevator', note: '2F ↔ 3F 엘리베이터' },
+  { from: 'plat-jr-saikyo', to: 'gate-jr-chuo', kind: 'elevator', note: '2F ↔ 3F 엘리베이터' },
+  { from: 'plat-jr-saikyo', to: 'gate-jr-shinminami', kind: 'elevator', note: '남쪽 끝 엘리베이터' },
+  { from: 'plat-ginza', to: 'gate-gz-meiji', kind: 'elevator', note: '3F ↔ 1F 엘리베이터' },
+  { from: 'plat-dt-hanzomon', to: 'gate-ty-miyachuo', kind: 'elevator', note: 'B3 ↔ B2 엘리베이터' },
+  { from: 'plat-dt-hanzomon', to: 'gate-dt-hachiko', kind: 'elevator', note: 'B3 ↔ B2 엘리베이터' },
+  { from: 'plat-toyoko-fukutoshin-34', to: 'conc-b4-transfer', kind: 'elevator', note: 'B5 ↔ B4 엘리베이터' },
+  { from: 'plat-toyoko-fukutoshin-56', to: 'conc-b4-transfer', kind: 'elevator', note: 'B5 ↔ B4 엘리베이터' },
+  { from: 'conc-b4-transfer', to: 'gate-ty-miyachuo', kind: 'elevator', note: 'B4 ↔ B2 엘리베이터' },
+  { from: 'conc-b4-transfer', to: 'gate-ty-hikarie1', kind: 'elevator', note: 'B4 ↔ B3 엘리베이터' },
+  { from: 'plat-inokashira', to: 'gate-keio-nishi', kind: 'elevator', note: '2F ↔ 1F 엘리베이터' },
+  { from: 'plat-inokashira', to: 'gate-keio-avenue', kind: 'elevator', note: '2F ↔ 4F 엘리베이터' },
+  { from: 'gate-ty-miyachuo', to: 'plaza-east-underground', kind: 'elevator', note: 'B2 지하광장 엘리베이터' },
+  { from: 'plaza-east-underground', to: 'plaza-hachiko', kind: 'elevator', note: 'B2 ↔ 지상 엘리베이터' },
+  { from: 'gate-dt-hachiko', to: 'plaza-hachiko', kind: 'elevator', note: 'B2 ↔ 지상 엘리베이터' },
+  { from: 'gate-jr-hachiko', to: 'plaza-hachiko', kind: 'elevator', note: '같은 지상 레벨' },
+  { from: 'pass-nishi-deck', to: 'plaza-hachiko', kind: 'elevator', note: '2F ↔ 지상 엘리베이터' },
+  { from: 'gate-keio-chuo', to: 'pass-markcity-free', kind: 'elevator', note: '마크시티 2F 평면' },
+  { from: 'pass-markcity-free', to: 'plaza-hachiko', kind: 'elevator', note: '마크시티 2F ↔ 하치공 광장 엘리베이터' },
+  { from: 'gate-jr-chuo', to: 'pass-nishi-deck', kind: 'elevator', note: '3F ↔ 2F 엘리베이터' },
+  { from: 'gate-jr-shinminami', to: 'pass-minami-kita-jiyu', kind: 'elevator', note: '개찰 정면 평면' },
+
+  /*
+   * 주요 건물과 역의 접속. 건물 지점은 OSM 발자국의 중심점이라 거리가
+   * 실제 개찰~입구 도보 거리와 정확히 같지는 않지만, 접속 관계 자체는 실제다.
+   */
+  { from: 'bldg-scramble-square', to: 'gate-jr-chuo', kind: 'walk', note: '3층 직결' },
+  { from: 'bldg-scramble-square', to: 'gate-gz-scramble', kind: 'walk', note: '3층 직결' },
+  { from: 'bldg-scramble-square', to: 'plaza-east-underground', kind: 'elevator', note: '지하 2층 직결' },
+  { from: 'bldg-scramble-square', to: 'pass-ss-stream', kind: 'walk' },
+  { from: 'bldg-scramble-square', to: 'pass-ss-hikarie', kind: 'walk' },
+  { from: 'bldg-hikarie', to: 'gate-ty-hikarie1', kind: 'elevator', note: '지하 3층 직결' },
+  { from: 'bldg-hikarie', to: 'gate-ty-hikarie2', kind: 'elevator', note: '지하 3층 직결' },
+  { from: 'bldg-hikarie', to: 'pass-ss-hikarie', kind: 'walk', note: '2층 연결통로' },
+  { from: 'bldg-stream', to: 'pass-ss-stream', kind: 'walk', note: '3층 데크' },
+  { from: 'bldg-stream', to: 'pass-minami-kita-jiyu', kind: 'walk', note: '자유통로 동쪽 끝' },
+  { from: 'bldg-stream-hall', to: 'bldg-stream', kind: 'walk' },
+  { from: 'bldg-fukuras', to: 'pass-nishi-deck', kind: 'walk', note: '2층 접속 데크' },
+  { from: 'bldg-fukuras', to: 'pass-nishi-hodo', kind: 'walk', note: '건물 내부 통로' },
+  { from: 'bldg-markcity-east', to: 'pass-markcity-free', kind: 'walk', note: '2층 자유통로' },
+  { from: 'bldg-markcity-east', to: 'gate-keio-chuo', kind: 'walk', note: '중앙구 직결' },
+  { from: 'bldg-sakura-shibuya', to: 'pass-minami-kita-jiyu', kind: 'walk', note: '자유통로 서쪽 끝' },
+  { from: 'bldg-sakura-central', to: 'bldg-sakura-shibuya', kind: 'walk' },
+  { from: 'bldg-sakura-central', to: 'bldg-sakura-sakura', kind: 'walk' },
+  { from: 'bldg-sakura-shibuya', to: 'pass-minami-kosen', kind: 'walk', note: '남쪽 육교 서쪽 끝' },
+  { from: 'bldg-station-shinminami', to: 'gate-jr-shinminami', kind: 'walk' },
+  { from: 'bldg-station-main', to: 'gate-jr-hachiko', kind: 'walk' },
+  { from: 'bldg-station-main', to: 'plaza-hachiko', kind: 'walk' },
+
   // 공사 중 (기본 경로 탐색에서 제외)
   { from: 'plan-skyway', to: 'plan-hikarie-deck', kind: 'walk', planned: true },
   { from: 'plan-skyway', to: 'plan-ss-central-west', kind: 'walk', planned: true },
