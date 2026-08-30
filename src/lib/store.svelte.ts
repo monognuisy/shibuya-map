@@ -42,6 +42,8 @@ export class AppState {
   navPlaying = $state(false);
   /** 초당 진행 거리 배속 */
   navSpeed = $state(1);
+  /** 경로 선 굵기(반지름, m) */
+  routeWidth = $state(2.2);
   /** 각 구간이 끝나는 경로상 진행 거리 (씬이 계산해 넣어 준다) */
   legOffsets = $state<number[]>([]);
   routeTotal = $state(0);
@@ -82,7 +84,11 @@ export class AppState {
     return this.places.find((p) => p.id === this.selectedId) ?? null;
   }
 
-  get route(): RouteResult | null {
+  /**
+   * 게터로 두면 참조할 때마다 다익스트라가 다시 돈다. `$derived` 로 캐시해
+   * 의존하는 상태가 바뀔 때만 계산한다.
+   */
+  readonly route: RouteResult | null = $derived.by(() => {
     const g = this.graph;
     if (!g || !this.fromId || !this.toId || this.fromId === this.toId) return null;
     const a = this.places.find((p) => p.id === this.fromId);
@@ -93,12 +99,12 @@ export class AppState {
       includePlanned: this.showPlanned,
       avoidPaidShortcut: this.avoidPaidShortcut,
     });
-  }
+  });
 
-  get itinerary(): Itinerary | null {
+  readonly itinerary: Itinerary | null = $derived.by(() => {
     const r = this.route;
     return r && this.doc ? buildItinerary(this.doc, r) : null;
-  }
+  });
 
   get matches(): PlaceDoc[] {
     const q = this.query.trim().toLowerCase();
@@ -118,18 +124,17 @@ export class AppState {
     return [...new Set(this.places.map((p) => p.level))].sort((a, b) => b - a);
   }
 
-  get view(): ViewState {
-    return {
-      exaggeration: this.exaggeration,
-      activeLevel: this.activeLevel,
-      layers: { ...this.layers },
-      realHeights: this.realHeights,
-      operators: new Set(this.operators),
-      showPlanned: this.showPlanned,
-      selectedId: this.selectedId,
-      routeNodes: this.route?.nodes ?? null,
-    };
-  }
+  readonly view: ViewState = $derived.by(() => ({
+    exaggeration: this.exaggeration,
+    activeLevel: this.activeLevel,
+    layers: { ...this.layers },
+    realHeights: this.realHeights,
+    operators: new Set(this.operators),
+    showPlanned: this.showPlanned,
+    selectedId: this.selectedId,
+    routeNodes: this.route?.nodes ?? null,
+    routeWidth: this.routeWidth,
+  }));
 
   toggleOperator(op: string) {
     const next = new Set(this.operators);

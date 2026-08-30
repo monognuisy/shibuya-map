@@ -18,7 +18,11 @@ export interface UrlState {
   h: boolean;
   /** 경로 따라가기 시작 위치(씬 단위). 읽기 전용 — 재생 중에 주소가 바뀌면 시끄럽다 */
   nav: number | null;
+  /** 열자마자 재생 */
+  play: boolean;
   ex: number | null;
+  /** 경로 선 굵기 */
+  rw: number | null;
 }
 
 export function readUrl(search: string): Partial<UrlState> {
@@ -34,6 +38,8 @@ export function readUrl(search: string): Partial<UrlState> {
   if (lv !== undefined) out.level = lv;
   const ex = num('ex');
   if (ex !== undefined) out.ex = Math.min(8, Math.max(1, ex));
+  const rw = num('rw');
+  if (rw !== undefined) out.rw = Math.min(6, Math.max(0.6, rw));
   for (const k of ['sel', 'from', 'to'] as const) {
     const v = q.get(k);
     if (v) out[k] = v;
@@ -42,6 +48,7 @@ export function readUrl(search: string): Partial<UrlState> {
   if (q.has('planned')) out.planned = q.get('planned') === '1';
   if (q.has('np')) out.np = q.get('np') === '1';
   if (q.has('nav')) out.nav = num('nav') ?? 0;
+  if (q.has('play')) out.play = q.get('play') === '1';
   if (q.has('h')) out.h = q.get('h') === '1';
   return out;
 }
@@ -53,11 +60,16 @@ export function applyUrl(app: AppState, search: string): void {
 
   if (u.level !== undefined) app.activeLevel = u.level;
   if (u.ex !== undefined && u.ex !== null) app.exaggeration = u.ex;
+  if (u.rw !== undefined && u.rw !== null) app.routeWidth = u.rw;
   if (u.bf !== undefined) app.barrierFree = u.bf;
   if (u.planned !== undefined) app.showPlanned = u.planned;
   if (u.np !== undefined) app.avoidPaidShortcut = u.np;
   if (u.h !== undefined) app.realHeights = u.h;
   if (u.nav !== undefined && u.nav !== null) app.navT = u.nav;
+  if (u.play) {
+    app.navT ??= 0;
+    app.navPlaying = true;
+  }
   if (u.from) app.fromId = known(u.from) ?? app.fromId;
   if (u.to) app.toId = known(u.to) ?? app.toId;
   if (u.sel) app.selectedId = known(u.sel);
@@ -74,5 +86,6 @@ export function toSearch(app: AppState): string {
   if (app.avoidPaidShortcut) q.set('np', '1');
   if (app.realHeights) q.set('h', '1');
   if (app.exaggeration !== 5) q.set('ex', String(app.exaggeration));
+  if (app.routeWidth !== 2.2) q.set('rw', String(app.routeWidth));
   return q.toString();
 }

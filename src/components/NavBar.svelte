@@ -48,6 +48,7 @@
         <option value={1}>1×</option>
         <option value={2}>2×</option>
         <option value={4}>4×</option>
+        <option value={8}>8×</option>
       </select>
     </label>
     <button class="btn" onclick={() => (app.navT = null)}>나가기</button>

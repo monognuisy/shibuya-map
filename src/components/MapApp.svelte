@@ -72,26 +72,30 @@
     };
   });
 
-  /** 경로를 따라가는 속도(씬 단위/초). 실시간 보행 속도로는 너무 느리다. */
-  const NAV_BASE_SPEED = 32;
+  /**
+   * 경로를 따라가는 속도(씬 단위/초).
+   * 실제 보행 속도(1.25 m/s)로는 500m 경로를 보는 데 7분이 걸려 쓸 수 없다.
+   * 1× 에서 전체 경로를 30초 안팎에 훑도록 잡았다.
+   */
+  const NAV_BASE_SPEED = 18;
 
-  // 상태가 바뀌면 씬에 반영
+  /**
+   * 상태를 씬에 반영하고, 그 직후에 경로 길이를 잰다.
+   * `scene.routeLength` 는 반응형이 아니라서 setState 로 경로를 다시 만든 뒤
+   * 같은 자리에서 읽지 않으면 0 인 채로 굳는다.
+   */
   $effect(() => {
     const v = app.view;
-    scene?.setState(v);
-  });
-
-  // 경로나 층 간격이 바뀌면 구간 경계를 다시 잰다
-  $effect(() => {
     const it = app.itinerary;
-    void app.exaggeration;
-    if (!scene || !it) {
-      app.legOffsets = [];
+    if (!scene) return;
+    scene.setState(v);
+    if (it) {
+      app.routeTotal = scene.routeLength;
+      app.legOffsets = it.legs.map((l) => scene!.lengthAtIndex(l.endIndex));
+    } else {
       app.routeTotal = 0;
-      return;
+      app.legOffsets = [];
     }
-    app.routeTotal = scene.routeLength;
-    app.legOffsets = it.legs.map((l) => scene!.lengthAtIndex(l.endIndex));
   });
 
   // 따라가기 카메라
@@ -105,7 +109,10 @@
     const on = app.navOn;
     if (on !== wasNav) {
       wasNav = on;
-      if (on) scene?.enterFollowView();
+      if (on) {
+        scene?.setFollow(app.navT);
+        scene?.enterFollowView();
+      }
       else scene?.resetView();
     }
   });

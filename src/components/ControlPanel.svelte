@@ -64,6 +64,18 @@
       />
       <span class="num">×{app.exaggeration}</span>
     </div>
+    <div class="row">
+      <span>경로 굵기</span>
+      <input
+        type="range"
+        min="0.6"
+        max="6"
+        step="0.2"
+        value={app.routeWidth}
+        oninput={(e) => (app.routeWidth = Number(e.currentTarget.value))}
+      />
+      <span class="num">{app.routeWidth.toFixed(1)}</span>
+    </div>
     <label class="tog">
       <input
         type="checkbox"

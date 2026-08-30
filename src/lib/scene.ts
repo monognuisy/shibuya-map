@@ -31,6 +31,8 @@ export interface ViewState {
   showPlanned: boolean;
   selectedId: string | null;
   routeNodes: number[] | null;
+  /** 경로 선 반지름(m) */
+  routeWidth: number;
 }
 
 export interface LabelBox {
@@ -156,6 +158,9 @@ export class MapScene {
     this.buildEdges();
     this.buildPlaces();
     this.buildRisers();
+    // 첫 상태에 이미 경로가 들어 있을 수 있다. setState 의 변경 감지에만
+    // 맡기면 처음 한 번이 통째로 빠진다.
+    this.buildRoute();
   }
 
   /**
@@ -544,7 +549,8 @@ export class MapScene {
 
   setState(next: ViewState) {
     const exaggerationChanged = next.exaggeration !== this.state.exaggeration;
-    const routeChanged = next.routeNodes !== this.state.routeNodes;
+    const routeChanged =
+      next.routeNodes !== this.state.routeNodes || next.routeWidth !== this.state.routeWidth;
     this.state = next;
     if (exaggerationChanged) {
       this.applyEdgeHeights();
@@ -634,7 +640,7 @@ export class MapScene {
     }
     const curve = new THREE.CatmullRomCurve3(pts, false, 'catmullrom', 0.02);
     const tube = new THREE.Mesh(
-      new THREE.TubeGeometry(curve, Math.min(pts.length * 6, 900), 5, 8, false),
+      new THREE.TubeGeometry(curve, Math.min(pts.length * 6, 900), this.state.routeWidth, 8, false),
       new THREE.MeshBasicMaterial({
         color: 0xffd166,
         transparent: true,
@@ -648,7 +654,7 @@ export class MapScene {
 
     for (const end of [pts[0]!, pts[pts.length - 1]!]) {
       const dot = new THREE.Mesh(
-        new THREE.SphereGeometry(8, 16, 12),
+        new THREE.SphereGeometry(this.state.routeWidth * 1.9, 16, 12),
         new THREE.MeshBasicMaterial({ color: 0xffc94d, depthTest: false }),
       );
       dot.position.copy(end);
@@ -708,7 +714,7 @@ export class MapScene {
       'wheel',
       (e) => {
         e.preventDefault();
-        this.distance = clamp(this.distance * (1 + Math.sign(e.deltaY) * 0.12), 90, 4000);
+        this.distance = clamp(this.distance * (1 + Math.sign(e.deltaY) * 0.12), 25, 4000);
       },
       { passive: false },
     );
@@ -735,9 +741,11 @@ export class MapScene {
 
   /** 경로 따라가기에 맞는 시점(뒤에서 살짝 위) 으로 전환. */
   enterFollowView(): void {
-    this.distance = 170;
-    this.phi = 0.5;
+    this.distance = 62;
+    this.phi = 0.3;
     this.yawOffset = 0;
+    // 첫 프레임부터 경로 위에 붙어 있도록 목표점을 미리 옮긴다
+    if (this.follow) this.target.copy(this.follow.pos);
   }
 
   /** 특정 지점으로 카메라를 이동. */
@@ -806,8 +814,8 @@ export class MapScene {
 
     if (this.follow) {
       // 급격히 튀지 않도록 목표점과 방위를 부드럽게 따라간다
-      this.target.lerp(this.follow.pos, 0.18);
-      this.theta = lerpAngle(this.theta, this.follow.theta + this.yawOffset, 0.14);
+      this.target.lerp(this.follow.pos, 0.22);
+      this.theta = lerpAngle(this.theta, this.follow.theta + this.yawOffset, 0.12);
     }
 
     const r = this.distance;
