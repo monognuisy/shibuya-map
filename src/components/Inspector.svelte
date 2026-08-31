@@ -7,176 +7,65 @@
     PROVENANCE_LABELS,
   } from '~/lib/palette';
   import type { AppState } from '~/lib/store.svelte';
+  import Btn from './Btn.svelte';
+  import Pane from './Pane.svelte';
 
   let { app }: { app: AppState } = $props();
   const p = $derived(app.selected);
 </script>
 
 {#if p}
-  <aside class="pane inspect">
-    <button class="close" onclick={() => (app.selectedId = null)} aria-label="닫기">×</button>
-    <div class="head">
+  <Pane class="fixed bottom-14 right-14 w-280 px-13 py-12">
+    <button
+      class="absolute top-6 right-8 cursor-pointer border-0 bg-transparent text-lg leading-none text-tx3 hover:text-tx"
+      onclick={() => (app.selectedId = null)}
+      aria-label="닫기">×</button
+    >
+    <div class="flex flex-wrap items-center gap-6 font-mono text-2xs tracking-6 text-tx3 uppercase">
       <span
-        class="dot"
+        class="h-7 w-7 rounded-full"
         style="background:{OPERATOR_COLORS[p.operator as keyof typeof OPERATOR_COLORS]}"
       ></span>
       {#if p.kind !== 'building'}
-        <span class="op">{OPERATOR_LABELS[p.operator as keyof typeof OPERATOR_LABELS]}</span>
+        <span>{OPERATOR_LABELS[p.operator as keyof typeof OPERATOR_LABELS]}</span>
       {/if}
-      <span class="lv">{levelCode(p.level)}</span>
-      <span class="kind">{KIND_LABELS[p.kind] ?? p.kind}</span>
-      {#if p.planned}<span class="plan">공사중</span>{/if}
+      <span class="rounded-3 border border-line2 px-5 py-1">{levelCode(p.level)}</span>
+      <span class="rounded-3 border border-line2 px-5 py-1">{KIND_LABELS[p.kind] ?? p.kind}</span>
+      {#if p.planned}<span class="rounded-3 border border-amber-dim px-5 py-1 text-amber"
+          >공사중</span
+        >{/if}
     </div>
-    <h2>{p.name}</h2>
-    {#if p.nameJa}<div class="ja">{p.nameJa}</div>{/if}
-    {#if p.desc}<p class="desc">{p.desc}</p>{/if}
+    <h2 class="mt-7 mb-1 text-14 font-medium text-tx">{p.name}</h2>
+    {#if p.nameJa}<div class="text-10 text-tx3">{p.nameJa}</div>{/if}
+    {#if p.desc}<p class="mt-8 text-11 leading-165 text-tx2">{p.desc}</p>{/if}
     {#if p.connectLevels?.length}
-      <div class="conn">
-        <span class="clabel">역·통로와 이어지는 층</span>
+      <div class="mt-9 flex flex-wrap items-center gap-4">
+        <span class="mr-2 text-xs text-tx3">역·통로와 이어지는 층</span>
         {#each [...p.connectLevels].sort((a, b) => b - a) as lv (lv)}
-          <span class="lvchip">{levelCode(lv)}</span>
+          <span class="rounded-3 border border-line2 bg-panel2 px-5 py-1 font-mono text-xs text-tx2"
+            >{levelCode(lv)}</span
+          >
         {/each}
       </div>
     {/if}
     {#if p.tags}
-      <dl class="tags">
+      <dl class="mt-9 grid grid-cols-[auto_1fr] gap-x-10 gap-y-2 text-10">
         {#each Object.entries(p.tags) as [k, v] (k)}
-          <dt>{k}</dt>
-          <dd>{v}</dd>
+          <dt class="text-tx3">{k}</dt>
+          <dd class="m-0 font-mono text-tx2">{v}</dd>
         {/each}
       </dl>
     {/if}
-    <div class="prov" class:warn={p.provenance === 'curated'}>
+    <div
+      class="mt-10 border-t border-line pt-8 font-mono text-2xs {p.provenance === 'curated'
+        ? 'text-amber'
+        : 'text-tx3'}"
+    >
       출처 · {PROVENANCE_LABELS[p.provenance] ?? p.provenance}
     </div>
-    <div class="acts">
-      <button class="btn" onclick={() => (app.fromId = p.id)}>출발지로</button>
-      <button class="btn" onclick={() => (app.toId = p.id)}>도착지로</button>
+    <div class="mt-8 flex gap-5">
+      <Btn onclick={() => (app.fromId = p.id)}>출발지로</Btn>
+      <Btn onclick={() => (app.toId = p.id)}>도착지로</Btn>
     </div>
-  </aside>
+  </Pane>
 {/if}
-
-<style>
-  .inspect {
-    position: fixed;
-    bottom: 14px;
-    right: 14px;
-    width: 280px;
-    padding: 12px 13px;
-  }
-  .close {
-    position: absolute;
-    top: 6px;
-    right: 8px;
-    background: none;
-    border: 0;
-    color: var(--tx3);
-    font-size: 15px;
-    cursor: pointer;
-    line-height: 1;
-  }
-  .close:hover {
-    color: var(--tx);
-  }
-  .head {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    flex-wrap: wrap;
-    font-size: 9px;
-    font-family: var(--mono);
-    letter-spacing: 0.06em;
-    color: var(--tx3);
-    text-transform: uppercase;
-  }
-  .dot {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-  }
-  .lv,
-  .kind,
-  .plan {
-    padding: 1px 5px;
-    border-radius: 3px;
-    border: 1px solid var(--line2);
-  }
-  .plan {
-    color: var(--amber);
-    border-color: var(--amber-dim);
-  }
-  h2 {
-    font-size: 14px;
-    font-weight: 500;
-    margin: 7px 0 1px;
-    color: var(--tx);
-  }
-  .ja {
-    font-size: 10px;
-    color: var(--tx3);
-  }
-  .desc {
-    margin-top: 8px;
-    font-size: 11px;
-    line-height: 1.65;
-    color: var(--tx2);
-  }
-  .conn {
-    margin-top: 9px;
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 4px;
-  }
-  .clabel {
-    font-size: 9.5px;
-    color: var(--tx3);
-    margin-right: 2px;
-  }
-  .lvchip {
-    font-family: var(--mono);
-    font-size: 9.5px;
-    padding: 1px 5px;
-    border-radius: 3px;
-    background: var(--panel2);
-    border: 1px solid var(--line2);
-    color: var(--tx2);
-  }
-  .tags {
-    margin: 9px 0 0;
-    display: grid;
-    grid-template-columns: auto 1fr;
-    gap: 2px 10px;
-    font-size: 10px;
-  }
-  dt {
-    color: var(--tx3);
-  }
-  dd {
-    margin: 0;
-    color: var(--tx2);
-    font-family: var(--mono);
-  }
-  .prov.warn {
-    color: var(--amber);
-  }
-  .prov {
-    margin-top: 10px;
-    padding-top: 8px;
-    border-top: 1px solid var(--line);
-    font-size: 9px;
-    color: var(--tx3);
-  }
-  .acts {
-    display: flex;
-    gap: 5px;
-    margin-top: 8px;
-  }
-  @media (max-width: 900px) {
-    .inspect {
-      position: static;
-      width: auto;
-      margin: 0 14px 14px;
-    }
-  }
-</style>
