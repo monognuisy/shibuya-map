@@ -33,24 +33,26 @@
 </script>
 
 <header
-  class="fixed inset-x-0 top-0 z-30 flex min-h-56 items-center justify-between
+  class="fixed inset-x-0 top-0 z-30 box-border flex items-center justify-between
          border-b border-line bg-bg/92 px-14 backdrop-blur-12"
-  style="padding-top: env(safe-area-inset-top);"
+  style="height: var(--topbar); padding-top: env(safe-area-inset-top);"
 >
   <div>
     <h1 class="m-0 font-mono text-base font-semibold tracking-title text-tx">
       SHIBUYA STATION
     </h1>
-    <p class="m-0 text-2xs text-tx3">시부야역 입체 보행 네트워크</p>
+    <p class="m-0 text-2xs text-tx3 compact:text-sm">시부야역 입체 보행 네트워크</p>
   </div>
   <button
-    class="min-h-40 min-w-40 rounded-4 border border-line2 bg-panel2 text-sm text-tx2"
+    class="min-h-40 min-w-40 rounded-4 border border-line2 bg-panel2 text-sm text-tx2 compact:text-base"
     onclick={onReset}
     aria-label="시점 초기화">⟳</button
   >
 </header>
 
-<div class="fixed top-72 right-8 z-10"><LevelRail {app} /></div>
+<div class="fixed right-8 z-10" style="top: calc(72px + env(safe-area-inset-top));">
+  <LevelRail {app} />
+</div>
 
 {#if app.navOn && snap !== 'full'}
   <div class="fixed inset-x-8 bottom-104 z-20"><NavBar {app} /></div>
@@ -60,7 +62,7 @@
   <div class="mb-12 flex gap-2 rounded-6 border border-line bg-panel2 p-2">
     {#each TABS as t (t.key)}
       <button
-        class="min-h-40 flex-1 cursor-pointer rounded-4 text-sm
+        class="min-h-40 flex-1 cursor-pointer rounded-4 text-sm compact:text-base
                {tab === t.key ? 'bg-amber font-medium text-bg' : 'text-tx2'}"
         onclick={() => (picked = t.key)}>{t.label}</button
       >

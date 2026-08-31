@@ -11,8 +11,6 @@
     children,
   }: { snap?: Snap; children: Snippet } = $props();
 
-  /** 시트가 다 열렸을 때 위에 남기는 높이 — 상단바 56px */
-  const TOP = 56;
   /** 스냅 단계별로 화면 아래에 감춰 두는 높이(px). 0 이면 다 열린 것. */
   const HIDDEN: Record<Snap, (h: number) => number> = {
     full: () => 0,
@@ -65,7 +63,7 @@
   bind:this={el}
   class="fixed inset-x-0 bottom-0 z-20 flex flex-col rounded-t-12 border-t border-line
          bg-panel/96 backdrop-blur-12"
-  style="height: calc(100dvh - {TOP}px);
+  style="height: calc(100dvh - var(--topbar));
          transform: translateY({offset}px);
          transition: {dragY === null ? 'transform 0.22s ease-out' : 'none'};
          padding-bottom: env(safe-area-inset-bottom);"

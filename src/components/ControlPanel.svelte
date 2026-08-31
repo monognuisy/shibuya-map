@@ -20,7 +20,7 @@
 
 <Pane class="w-246 px-12 py-12">
   <div class="mb-12 last:mb-0">
-    <div class="mb-6 font-mono text-2xs tracking-13 text-tx3 uppercase">레이어</div>
+    <div class="mb-6 font-mono text-2xs tracking-13 text-tx3 uppercase compact:text-sm">레이어</div>
     {#each layerRows as row (row.key)}
       <label
         class="flex cursor-pointer items-center gap-6 py-2 text-sm text-tx2 select-none
@@ -39,11 +39,11 @@
   </div>
 
   <div class="mb-12 last:mb-0">
-    <div class="mb-6 font-mono text-2xs tracking-13 text-tx3 uppercase">사업자 · 종류</div>
+    <div class="mb-6 font-mono text-2xs tracking-13 text-tx3 uppercase compact:text-sm">사업자 · 종류</div>
     <div class="flex flex-wrap gap-4">
       {#each ALL_OPERATORS as op (op)}
         <button
-          class="rounded-12 border px-8 py-3 font-sans text-sm transition-all duration-150 {app.operators.has(
+          class="rounded-12 border px-8 py-3 font-sans text-sm transition-all duration-150 compact:min-h-40 compact:text-base {app.operators.has(
             op,
           )
             ? 'cursor-pointer border-transparent font-medium text-bg'
@@ -60,8 +60,8 @@
   </div>
 
   <div class="mb-12 last:mb-0">
-    <div class="mb-6 font-mono text-2xs tracking-13 text-tx3 uppercase">표시</div>
-    <div class="mb-6 flex items-center gap-8 text-sm text-tx2">
+    <div class="mb-6 font-mono text-2xs tracking-13 text-tx3 uppercase compact:text-sm">표시</div>
+    <div class="mb-6 flex items-center gap-8 text-sm text-tx2 compact:text-base">
       <span>층 간격</span>
       <input
         type="range"
@@ -74,7 +74,7 @@
       />
       <span class="w-26 font-mono text-tx3">×{app.exaggeration}</span>
     </div>
-    <div class="mb-6 flex items-center gap-8 text-sm text-tx2">
+    <div class="mb-6 flex items-center gap-8 text-sm text-tx2 compact:text-base">
       <span>경로 굵기</span>
       <input
         type="range"

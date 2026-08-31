@@ -211,7 +211,10 @@
         s.y > -20 &&
         s.x < labelHost.clientWidth + 60 &&
         s.y < labelHost.clientHeight + 20;
-      const cell = `${Math.round(s.x / 132)}:${Math.round(s.y / 26)}`;
+      // 폰에서는 라벨이 커지고 화면이 좁아 더 성기게 걸러야 겹치지 않는다
+      const cw = compact ? 116 : 132;
+      const ch = compact ? 32 : 26;
+      const cell = `${Math.round(s.x / cw)}:${Math.round(s.y / ch)}`;
       const selected = app.selectedId === l.id;
       const show = onScreen && (selected || !occupied.has(cell));
       if (show && !selected) occupied.add(cell);
@@ -225,7 +228,7 @@
 
 <svelte:window onkeydown={onKey} />
 
-<div class="fixed inset-0">
+<div class="fixed inset-0" data-compact={compact ? '' : undefined}>
   <div class="absolute inset-0" bind:this={stage}></div>
   <div class="pointer-events-none absolute inset-0 overflow-hidden" bind:this={labelHost}></div>
 
@@ -254,7 +257,7 @@
       데이터 로딩 중…
     </Pane>
   {:else}
-    <div data-compact={compact ? '' : undefined}>
+    <div>
       {#if compact}
         <MobileShell {app} onReset={() => scene?.resetView()} />
       {:else}

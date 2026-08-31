@@ -12,28 +12,28 @@
   aria-label="층 선택"
 >
   <button
-    class="flex w-full cursor-pointer items-center gap-8 rounded-3 border-0 px-8 py-3 text-left font-mono text-sm transition duration-150 {app.activeLevel ===
+    class="flex w-full cursor-pointer items-center gap-8 rounded-3 border-0 px-8 py-3 text-left font-mono text-sm transition duration-150 compact:min-h-40 compact:text-base {app.activeLevel ===
     null
       ? 'bg-amber font-semibold text-bg'
       : 'bg-transparent text-tx3 hover:bg-panel2 hover:text-tx2'}"
     onclick={() => (app.activeLevel = null)}
   >
     <span class="w-28 font-medium">ALL</span><span
-      class="font-sans text-xs {app.activeLevel === null ? 'opacity-85' : 'opacity-70'}"
+      class="font-sans text-xs compact:text-sm {app.activeLevel === null ? 'opacity-85' : 'opacity-70'}"
       >전체 층</span
     >
   </button>
   {#each LEVELS as lv (lv.id)}
     {#if present.has(lv.id)}
       <button
-        class="flex w-full cursor-pointer items-center gap-8 rounded-3 border-0 px-8 py-3 text-left font-mono text-sm transition duration-150 {app.activeLevel ===
+        class="flex w-full cursor-pointer items-center gap-8 rounded-3 border-0 px-8 py-3 text-left font-mono text-sm transition duration-150 compact:min-h-40 compact:text-base {app.activeLevel ===
         lv.id
           ? 'bg-amber font-semibold text-bg'
           : 'bg-transparent text-tx3 hover:bg-panel2 hover:text-tx2'}"
         onclick={() => (app.activeLevel = app.activeLevel === lv.id ? null : lv.id)}
       >
         <span class="w-28 font-medium">{lv.code}</span><span
-          class="font-sans text-xs {app.activeLevel === lv.id ? 'opacity-85' : 'opacity-70'}"
+          class="font-sans text-xs compact:text-sm {app.activeLevel === lv.id ? 'opacity-85' : 'opacity-70'}"
           >{lv.label}</span
         >
       </button>

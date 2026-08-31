@@ -28,11 +28,11 @@
 
 </script>
 
-<Pane class="w-280 overflow-y-auto px-12 py-12">
-  <div class="mb-8 font-mono text-2xs tracking-13 text-tx3 uppercase">경로 안내</div>
+<Pane class="w-280 compact:w-full overflow-y-auto px-12 py-12">
+  <div class="mb-8 font-mono text-2xs tracking-13 text-tx3 uppercase compact:text-sm">경로 안내</div>
 
   <label class="mb-6 block">
-    <span class="mb-2 block text-xs text-tx3">출발</span>
+    <span class="mb-2 block text-xs text-tx3 compact:text-sm">출발</span>
     <select
       bind:value={app.fromId}
       class="w-full rounded-4 border border-line2 bg-panel2 px-8 py-4 font-sans
@@ -46,7 +46,7 @@
     </select>
   </label>
   <label class="mb-6 block">
-    <span class="mb-2 block text-xs text-tx3">도착</span>
+    <span class="mb-2 block text-xs text-tx3 compact:text-sm">도착</span>
     <select
       bind:value={app.toId}
       class="w-full rounded-4 border border-line2 bg-panel2 px-8 py-4 font-sans
@@ -87,10 +87,10 @@
     {@const r = app.route}
     <div class="mt-10 border-t border-line pt-8">
       <div class="font-mono text-xl font-semibold text-amber">{formatDuration(r.seconds)}</div>
-      <div class="mt-2 text-sm text-tx2">
+      <div class="mt-2 text-sm text-tx2 compact:text-base">
         {r.distance} m · 올라감 {r.climb} m · 내려감 {r.descend} m
       </div>
-      <div class="mt-2 text-sm text-tx2">
+      <div class="mt-2 text-sm text-tx2 compact:text-base">
         {#if r.gateCrossings === 0}
           개찰을 지나지 않습니다
         {:else}
@@ -99,16 +99,17 @@
       </div>
       <div class="mt-6 flex flex-wrap items-center gap-3">
         {#each r.levels as lv, i (i)}
-          <span class="rounded-3 border border-line2 bg-panel2 px-4 py-1 font-mono text-xs text-tx2"
+          <span class="rounded-3 border border-line2 bg-panel2 px-4 py-1 font-mono text-xs text-tx2 compact:text-sm"
             >{levelCode(lv)}</span
-          >{#if i < r.levels.length - 1}<span class="text-2xs text-tx3">→</span>{/if}
+          >{#if i < r.levels.length - 1}<span class="text-2xs text-tx3 compact:text-sm">→</span>{/if}
         {/each}
       </div>
     </div>
     <button
       class="mt-10 w-full cursor-pointer rounded-4 border border-amber bg-amber px-10 py-4
              font-sans text-sm font-medium text-bg transition duration-150
-             hover:border-amber-dim hover:text-bg hover:opacity-90"
+             hover:border-amber-dim hover:text-bg hover:opacity-90
+             compact:min-h-40 compact:text-base"
       onclick={() => {
         if (app.navOn) {
           app.navT = null;
@@ -123,9 +124,9 @@
     </button>
     <Itinerary {app} />
   {:else if app.fromId === app.toId}
-    <p class="mt-10 text-sm leading-normal text-tx3">출발과 도착이 같습니다.</p>
+    <p class="mt-10 text-sm leading-normal text-tx3 compact:text-base">출발과 도착이 같습니다.</p>
   {:else}
-    <p class="mt-10 text-sm leading-normal text-tx3">
+    <p class="mt-10 text-sm leading-normal text-tx3 compact:text-base">
       선택한 조건으로 이어지는 경로가 없습니다.
       {#if app.barrierFree}배리어프리 조건을 풀면 찾을 수 있습니다.{/if}
       {#if app.avoidPaidShortcut}개찰 조건을 풀면 찾을 수 있습니다.{/if}

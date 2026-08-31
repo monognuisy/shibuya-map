@@ -15,13 +15,13 @@
 </script>
 
 {#if p}
-  <Pane class="w-280 px-12 py-12">
+  <Pane class="w-280 compact:w-full px-12 py-12">
     <button
       class="absolute top-6 right-8 cursor-pointer border-0 bg-transparent text-lg leading-none text-tx3 hover:text-tx"
       onclick={() => (app.selectedId = null)}
       aria-label="닫기">×</button
     >
-    <div class="flex flex-wrap items-center gap-6 font-mono text-2xs tracking-6 text-tx3 uppercase">
+    <div class="flex flex-wrap items-center gap-6 font-mono text-2xs tracking-6 text-tx3 uppercase compact:text-sm">
       <span
         class="h-6 w-6 rounded-full"
         style="background:{OPERATOR_COLORS[p.operator as keyof typeof OPERATOR_COLORS]}"
@@ -36,20 +36,20 @@
         >{/if}
     </div>
     <h2 class="mt-6 mb-1 text-lg font-medium text-tx">{p.name}</h2>
-    {#if p.nameJa}<div class="text-sm text-tx3">{p.nameJa}</div>{/if}
-    {#if p.desc}<p class="mt-8 text-sm leading-165 text-tx2">{p.desc}</p>{/if}
+    {#if p.nameJa}<div class="text-sm text-tx3 compact:text-base">{p.nameJa}</div>{/if}
+    {#if p.desc}<p class="mt-8 text-sm leading-165 text-tx2 compact:text-base">{p.desc}</p>{/if}
     {#if p.connectLevels?.length}
       <div class="mt-8 flex flex-wrap items-center gap-4">
-        <span class="mr-2 text-xs text-tx3">역·통로와 이어지는 층</span>
+        <span class="mr-2 text-xs text-tx3 compact:text-sm">역·통로와 이어지는 층</span>
         {#each [...p.connectLevels].sort((a, b) => b - a) as lv (lv)}
-          <span class="rounded-3 border border-line2 bg-panel2 px-4 py-1 font-mono text-xs text-tx2"
+          <span class="rounded-3 border border-line2 bg-panel2 px-4 py-1 font-mono text-xs text-tx2 compact:text-sm"
             >{levelCode(lv)}</span
           >
         {/each}
       </div>
     {/if}
     {#if p.tags}
-      <dl class="mt-8 grid grid-cols-[auto_1fr] gap-x-10 gap-y-2 text-sm">
+      <dl class="mt-8 grid grid-cols-[auto_1fr] gap-x-10 gap-y-2 text-sm compact:text-base">
         {#each Object.entries(p.tags) as [k, v] (k)}
           <dt class="text-tx3">{k}</dt>
           <dd class="m-0 font-mono text-tx2">{v}</dd>
@@ -57,7 +57,7 @@
       </dl>
     {/if}
     <div
-      class="mt-10 border-t border-line pt-8 font-mono text-2xs {p.provenance === 'curated'
+      class="mt-10 border-t border-line pt-8 font-mono text-2xs compact:text-sm {p.provenance === 'curated'
         ? 'text-amber'
         : 'text-tx3'}"
     >

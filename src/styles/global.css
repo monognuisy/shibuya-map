@@ -68,6 +68,10 @@
  */
 
 @layer base {
+  :root {
+    /* 상단바 높이. 시트가 위에 남길 공간과 같은 값을 봐야 노치 기기에서 겹치지 않는다 */
+    --topbar: calc(56px + env(safe-area-inset-top, 0px));
+  }
   html,
   body {
     height: 100%;
@@ -151,5 +155,14 @@
   }
   .lb.k-platform {
     font-weight: 500;
+  }
+  /* 컴팩트(폰)에서는 손가락으로 짚기 쉽게 라벨 글자를 한 단계 키운다 */
+  [data-compact] .lb {
+    font-size: var(--text-base);
+    padding: 3px 8px;
+  }
+  [data-compact] .lb.k-building,
+  [data-compact] .lb.k-entrance {
+    font-size: var(--text-sm);
   }
 }
