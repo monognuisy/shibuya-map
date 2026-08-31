@@ -94,6 +94,32 @@ export const LINK_SOURCES = {
     url: 'https://trainstation.jp/tokyo-metro/shibuya-station-ginza-line',
     kind: 'secondary',
   },
+  'tokyu-land-sakura': {
+    title: '東急不動産「渋谷サクラステージ」 시설 소개',
+    url: 'https://www.tokyu-land.co.jp/company/magazine/shibuyasakurastage.html',
+    kind: 'official',
+  },
+  'shibuya-city-deck': {
+    title: '시부야구 クリエイティブ・ジャンクション「国道246号横断デッキ」',
+    url: 'https://creative-junction.city.shibuya.tokyo.jp/spaces/501',
+    kind: 'official',
+  },
+  'hikarie-access': {
+    title: '渋谷ヒカリエ 공식 액세스 안내',
+    url: 'https://www.hikarie.jp/access/',
+    kind: 'official',
+  },
+  'shibukei-shinminami': {
+    title: '시부야경제신문「JR渋谷駅『新南改札』が新駅舎に移転」',
+    url: 'https://www.shibukei.com/headline/18529/',
+    revision: '2024-07',
+    kind: 'press',
+  },
+  'impress-skyway': {
+    title: 'Impress Watch「渋谷の新たな歩行者デッキを歩いた」 동측 4층 스카이웨이',
+    url: 'https://www.watch.impress.co.jp/docs/news/2029501.html',
+    kind: 'press',
+  },
   osm: {
     title: 'OpenStreetMap — 승강장·통로 형상과 level 태그',
     url: 'https://www.openstreetmap.org/',
