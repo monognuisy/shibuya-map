@@ -40,6 +40,9 @@
   --radius-12: 12px;
   --blur-12: 12px;
   --tracking-title: 0.14em;
+
+  /* 출처 패널 시트 폭. min() 이라 --spacing 눈금으로 표현할 수 없어 별도 등록한다 */
+  --width-attr-sheet: min(560px, 92vw);
 }
 
 /*

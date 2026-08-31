@@ -7,85 +7,36 @@
   const present = $derived(new Set(app.levels));
 </script>
 
-<nav class="pane rail" aria-label="층 선택">
+<nav
+  class="fixed top-118 left-14 z-10 flex flex-col gap-1 rounded-6 border border-line bg-panel/94 p-6 backdrop-blur-12"
+  aria-label="층 선택"
+>
   <button
-    class="lv"
-    class:act={app.activeLevel === null}
+    class="flex w-full items-center gap-9 rounded-3 border-0 bg-transparent px-8 py-3 text-left font-mono text-sm text-tx3 transition duration-150 hover:bg-panel2 hover:text-tx2 {app.activeLevel ===
+    null
+      ? 'bg-amber font-semibold text-bg'
+      : ''}"
     onclick={() => (app.activeLevel = null)}
   >
-    <span class="n">ALL</span><span class="d">전체 층</span>
+    <span class="w-28 font-medium">ALL</span><span
+      class="font-sans text-xs opacity-70 {app.activeLevel === null ? 'opacity-85' : ''}"
+      >전체 층</span
+    >
   </button>
   {#each LEVELS as lv (lv.id)}
     {#if present.has(lv.id)}
       <button
-        class="lv"
-        class:act={app.activeLevel === lv.id}
+        class="flex w-full items-center gap-9 rounded-3 border-0 bg-transparent px-8 py-3 text-left font-mono text-sm text-tx3 transition duration-150 hover:bg-panel2 hover:text-tx2 {app.activeLevel ===
+        lv.id
+          ? 'bg-amber font-semibold text-bg'
+          : ''}"
         onclick={() => (app.activeLevel = app.activeLevel === lv.id ? null : lv.id)}
       >
-        <span class="n">{lv.code}</span><span class="d">{lv.label}</span>
+        <span class="w-28 font-medium">{lv.code}</span><span
+          class="font-sans text-xs opacity-70 {app.activeLevel === lv.id ? 'opacity-85' : ''}"
+          >{lv.label}</span
+        >
       </button>
     {/if}
   {/each}
 </nav>
-
-<style>
-  .rail {
-    position: fixed;
-    top: 118px;
-    left: 14px;
-    padding: 6px;
-    display: flex;
-    flex-direction: column;
-    gap: 1px;
-  }
-  .lv {
-    display: flex;
-    align-items: center;
-    gap: 9px;
-    padding: 3px 8px;
-    border: 0;
-    border-radius: 3px;
-    background: transparent;
-    cursor: pointer;
-    font-family: var(--mono);
-    font-size: 10.5px;
-    color: var(--tx3);
-    transition: 0.15s;
-    text-align: left;
-    width: 100%;
-  }
-  .lv:hover {
-    background: var(--panel2);
-    color: var(--tx2);
-  }
-  .lv.act {
-    background: var(--amber);
-    color: #0e1218;
-    font-weight: 600;
-  }
-  .n {
-    width: 28px;
-    font-weight: 500;
-  }
-  .d {
-    font-size: 9.5px;
-    opacity: 0.72;
-    font-family: var(--sans);
-  }
-  .lv.act .d {
-    opacity: 0.85;
-  }
-  @media (max-width: 900px) {
-    .rail {
-      top: auto;
-      bottom: 14px;
-      left: 14px;
-      right: 14px;
-      flex-direction: row;
-      overflow-x: auto;
-    }
-    .d {
-      display: none;
-    }
-  }
-</style>
