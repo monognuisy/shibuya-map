@@ -1,145 +1,135 @@
-:root {
-  --bg: #0e1218;
-  --panel: #161d26;
-  --panel2: #1d2530;
-  --line: #28313e;
-  --line2: #36424f;
-  --tx: #e6ebf2;
-  --tx2: #94a1b3;
-  --tx3: #5f6c7d;
-  --amber: #e8b23a;
-  --amber-dim: #7a5f1e;
-  --mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
-  --sans: 'IBM Plex Sans KR', system-ui, -apple-system, sans-serif;
-  color-scheme: dark;
+@import 'tailwindcss';
+
+/*
+ * 컴팩트(폰) 변형. 셸이 감싸는 요소에 data-compact 를 걸면 그 안쪽 전체가 반응한다.
+ * 판정이 셸 한 곳에만 있게 하려고 Tailwind 기본 브레이크포인트를 쓰지 않는다.
+ */
+@custom-variant compact (&:where([data-compact], [data-compact] *));
+
+@theme {
+  --color-bg: #0e1218;
+  --color-panel: #161d26;
+  --color-panel2: #1d2530;
+  --color-line: #28313e;
+  --color-line2: #36424f;
+  --color-tx: #e6ebf2;
+  --color-tx2: #94a1b3;
+  --color-tx3: #5f6c7d;
+  --color-amber: #e8b23a;
+  --color-amber-dim: #7a5f1e;
+
+  --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-sans: 'IBM Plex Sans KR', system-ui, -apple-system, sans-serif;
+
+  /* 계기판 같은 촘촘한 UI 라 기본 스케일 대신 이 프로젝트의 눈금을 쓴다 */
+  --text-2xs: 9px;
+  --text-xs: 9.5px;
+  --text-sm: 10.5px;
+  --text-base: 12px;
+  --text-lg: 15px;
+  --text-xl: 19px;
+
+  /* p-6 이 6px 가 된다. 값이 곧 픽셀이라 이행 중 눈으로 대조하기 쉽다. */
+  --spacing: 1px;
+
+  /* 모서리·흐림·자간은 spacing 과 다른 눈금이라 따로 등록해야 유틸리티가 생긴다 */
+  --radius-2: 2px;
+  --radius-3: 3px;
+  --radius-4: 4px;
+  --radius-6: 6px;
+  --radius-12: 12px;
+  --blur-12: 12px;
+  --tracking-title: 0.14em;
 }
 
-* {
-  box-sizing: border-box;
-}
+/*
+ * 터치 최소 타깃은 40px 다. --spacing 이 1px 이므로 min-h-40 이 곧 40px 이라
+ * 별도 토큰을 두지 않는다.
+ */
 
-html,
-body {
-  height: 100%;
-  margin: 0;
-}
-
-body {
-  background: var(--bg);
-  color: var(--tx);
-  font-family: var(--sans);
-  font-weight: 300;
-  overflow: hidden;
-  -webkit-font-smoothing: antialiased;
-}
-
-canvas {
-  display: block;
-  cursor: grab;
-}
-canvas.dragging {
-  cursor: grabbing;
-}
-
-.pane {
-  background: rgba(22, 29, 38, 0.94);
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  backdrop-filter: blur(12px);
-  z-index: 4;
-}
-
-.tog {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
-  font-size: 10.5px;
-  color: var(--tx2);
-  user-select: none;
-  padding: 2px 0;
-}
-.tog input {
-  accent-color: var(--amber);
-  width: 12px;
-  height: 12px;
-  cursor: pointer;
-}
-
-.btn {
-  font-family: var(--sans);
-  font-size: 10.5px;
-  padding: 5px 10px;
-  border-radius: 4px;
-  border: 1px solid var(--line2);
-  background: var(--panel2);
-  color: var(--tx2);
-  cursor: pointer;
-  transition: 0.15s;
-}
-.btn:hover {
-  border-color: var(--amber-dim);
-  color: var(--tx);
-}
-
-/* three.js 위에 얹는 지점 라벨 */
-.lb {
-  position: absolute;
-  top: 0;
-  left: 0;
-  font-family: var(--mono), var(--sans);
-  font-size: 10.5px;
-  letter-spacing: 0.01em;
-  white-space: nowrap;
-  padding: 2px 6px;
-  border-radius: 3px;
-  background: rgba(14, 18, 24, 0.82);
-  border: 1px solid var(--line);
-  border-left: 2px solid var(--op, var(--line2));
-  color: var(--tx2);
-  pointer-events: auto;
-  cursor: pointer;
-  transition:
-    opacity 0.18s,
-    color 0.18s,
-    border-color 0.18s;
-}
-.lb:hover {
-  color: var(--tx);
-  border-color: var(--line2);
-  border-left-color: var(--op);
-}
-.lb.sel {
-  color: #0e1218;
-  background: var(--amber);
-  border-color: var(--amber);
-  font-weight: 600;
-}
-.lb.plan {
-  border-style: dashed;
-  color: var(--tx3);
-}
-.lb.hide {
-  opacity: 0;
-  pointer-events: none;
-}
-/* 건물·출입구는 배경 맥락이라 한 단계 눌러 둔다 */
-.lb.k-building,
-.lb.k-entrance {
-  font-size: 9.5px;
-  color: var(--tx3);
-  background: rgba(14, 18, 24, 0.7);
-}
-.lb.k-building:hover,
-.lb.k-entrance:hover {
-  color: var(--tx2);
-}
-.lb.k-platform {
-  font-weight: 500;
-}
-
-@media (max-width: 900px) {
+@layer base {
+  html,
   body {
-    overflow: auto;
+    height: 100%;
+    margin: 0;
+  }
+  body {
+    background: var(--color-bg);
+    color: var(--color-tx);
+    font-family: var(--font-sans);
+    font-weight: 300;
+    overflow: hidden;
+    overscroll-behavior: none;
+    -webkit-font-smoothing: antialiased;
+    color-scheme: dark;
+  }
+  canvas {
+    display: block;
+    cursor: grab;
+    touch-action: none;
+  }
+  canvas.dragging {
+    cursor: grabbing;
+  }
+}
+
+/*
+ * 3D 라벨. MapApp 이 el.className = `lb k-${kind}` 로 조립하므로 Tailwind
+ * 스캐너가 읽지 못한다. 유틸리티로 옮기지 않고 여기 손으로 둔다.
+ */
+@layer components {
+  .lb {
+    position: absolute;
+    top: 0;
+    left: 0;
+    font-family: var(--font-mono), var(--font-sans);
+    font-size: var(--text-sm);
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+    padding: 2px 6px;
+    border-radius: 3px;
+    background: color-mix(in srgb, var(--color-bg) 82%, transparent);
+    border: 1px solid var(--color-line);
+    border-left: 2px solid var(--op, var(--color-line2));
+    color: var(--color-tx2);
+    pointer-events: auto;
+    cursor: pointer;
+    transition:
+      opacity 0.18s,
+      color 0.18s,
+      border-color 0.18s;
+  }
+  .lb:hover {
+    color: var(--color-tx);
+    border-color: var(--color-line2);
+    border-left-color: var(--op);
+  }
+  .lb.sel {
+    color: var(--color-bg);
+    background: var(--color-amber);
+    border-color: var(--color-amber);
+    font-weight: 600;
+  }
+  .lb.plan {
+    border-style: dashed;
+    color: var(--color-tx3);
+  }
+  .lb.hide {
+    opacity: 0;
+    pointer-events: none;
+  }
+  /* 건물·출입구는 배경 맥락이라 한 단계 눌러 둔다 */
+  .lb.k-building,
+  .lb.k-entrance {
+    font-size: var(--text-xs);
+    color: var(--color-tx3);
+    background: color-mix(in srgb, var(--color-bg) 70%, transparent);
+  }
+  .lb.k-building:hover,
+  .lb.k-entrance:hover {
+    color: var(--color-tx2);
+  }
+  .lb.k-platform {
+    font-weight: 500;
   }
 }
