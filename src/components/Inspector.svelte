@@ -15,7 +15,7 @@
 </script>
 
 {#if p}
-  <Pane class="fixed bottom-14 right-14 w-280 px-12 py-12">
+  <Pane class="w-280 px-12 py-12">
     <button
       class="absolute top-6 right-8 cursor-pointer border-0 bg-transparent text-lg leading-none text-tx3 hover:text-tx"
       onclick={() => (app.selectedId = null)}

@@ -18,7 +18,7 @@
   ] as const;
 </script>
 
-<Pane class="fixed bottom-14 left-14 w-246 px-12 py-12">
+<Pane class="w-246 px-12 py-12">
   <div class="mb-12 last:mb-0">
     <div class="mb-6 font-mono text-2xs tracking-13 text-tx3 uppercase">레이어</div>
     {#each layerRows as row (row.key)}

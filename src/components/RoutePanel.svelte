@@ -28,9 +28,7 @@
 
 </script>
 
-<Pane
-  class="fixed top-14 right-14 w-280 max-h-route overflow-y-auto px-12 py-12"
->
+<Pane class="w-280 overflow-y-auto px-12 py-12">
   <div class="mb-8 font-mono text-2xs tracking-13 text-tx3 uppercase">경로 안내</div>
 
   <label class="mb-6 block">

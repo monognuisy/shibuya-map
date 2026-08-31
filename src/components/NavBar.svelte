@@ -15,8 +15,7 @@
   const progress = $derived(total > 0 ? Math.min(1, (app.navT ?? 0) / total) : 0);
 </script>
 
-<!-- bottom-42: 아래 가운데의 출처 버튼과 겹치지 않게 한 칸 올린다 -->
-<Pane class="fixed bottom-42 left-1/2 w-nav -translate-x-1/2 pt-8 px-12 pb-6">
+<Pane class="w-nav pt-8 px-12 pb-6">
   <div class="flex items-center gap-6">
     <button
       class="w-28 cursor-pointer rounded-4 border border-line2 bg-panel2 px-0 py-4 text-center

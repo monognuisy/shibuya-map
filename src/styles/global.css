@@ -57,8 +57,9 @@
   /* NavBar 폭. min() 이라 --spacing 눈금으로 표현할 수 없어 별도 등록한다 */
   --width-nav: min(720px, calc(100vw - 28px));
 
-  /* 경로 패널 세로 최대 높이. calc() 라 --spacing 눈금으로 표현할 수 없어 별도 등록한다 */
-  --max-height-route: calc(100vh - 28px);
+  /* 경로 패널 세로 최대 높이. calc() 라 --spacing 눈금으로 표현할 수 없어 별도 등록한다.
+     100vh 대신 100dvh — 모바일 주소창 높이 변화를 반영한다. */
+  --max-height-route: calc(100dvh - 28px);
 }
 
 /*

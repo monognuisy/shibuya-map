@@ -6,7 +6,7 @@
   const meta = $derived(app.doc?.meta ?? null);
 </script>
 
-<div class="fixed bottom-14 left-1/2 z-10 -translate-x-1/2">
+<div class="relative">
   <button
     class="cursor-pointer rounded-4 border border-line bg-panel/90 px-10 py-4 font-mono text-2xs tracking-8 text-tx3 uppercase hover:border-line2 hover:text-tx2"
     onclick={() => (open = !open)}>데이터 출처 · 라이선스</button

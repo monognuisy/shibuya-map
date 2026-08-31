@@ -7,13 +7,8 @@
   import { applyUrl, toSearch } from '~/lib/urlstate';
   import { OPERATOR_COLORS } from '~/lib/palette';
 
-  import Attribution from './Attribution.svelte';
-  import NavBar from './NavBar.svelte';
-  import ControlPanel from './ControlPanel.svelte';
-  import Inspector from './Inspector.svelte';
-  import LevelRail from './LevelRail.svelte';
+  import DesktopShell from './DesktopShell.svelte';
   import Pane from './Pane.svelte';
-  import RoutePanel from './RoutePanel.svelte';
 
   let { dataUrl }: { dataUrl: string } = $props();
 
@@ -22,6 +17,21 @@
   let labelHost: HTMLDivElement;
   let scene: MapScene | null = null;
   let labelEls = new Map<string, HTMLElement>();
+
+  /**
+   * 폭만 보면 가로 모드 폰(844×390)이 데스크톱 배치에 걸려 패널이 세로로 넘친다.
+   * pointer: coarse 는 터치 지원 노트북을 잘못 잡으므로 쓰지 않는다.
+   * 이 조건은 저장소에서 여기 한 곳에만 있어야 한다.
+   */
+  let compact = $state(false);
+
+  $effect(() => {
+    const mq = matchMedia('(max-width: 820px), (max-height: 520px)');
+    const sync = () => (compact = mq.matches);
+    sync();
+    mq.addEventListener('change', sync);
+    return () => mq.removeEventListener('change', sync);
+  });
 
 
   onMount(() => {
@@ -241,13 +251,8 @@
       데이터 로딩 중…
     </Pane>
   {:else}
-    {#if app.navOn}
-      <NavBar {app} />
-    {/if}
-    <LevelRail {app} />
-    <ControlPanel {app} onReset={() => scene?.resetView()} />
-    <RoutePanel {app} />
-    <Inspector {app} />
-    <Attribution {app} />
+    <div data-compact={compact}>
+      <DesktopShell {app} onReset={() => scene?.resetView()} />
+    </div>
   {/if}
 </div>

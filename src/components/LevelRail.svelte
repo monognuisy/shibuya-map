@@ -8,7 +8,7 @@
 </script>
 
 <nav
-  class="fixed top-118 left-14 z-10 flex flex-col gap-1 rounded-6 border border-line bg-panel/94 p-6 backdrop-blur-12"
+  class="flex flex-col gap-1 rounded-6 border border-line bg-panel/94 p-6 backdrop-blur-12"
   aria-label="층 선택"
 >
   <button
