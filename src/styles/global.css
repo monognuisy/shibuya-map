@@ -39,6 +39,13 @@
   --radius-6: 6px;
   --radius-12: 12px;
   --blur-12: 12px;
+  /* 자간은 spacing 과 눈금이 달라 따로 등록한다. 이름은 백분율 값이다 (tracking-8 = 0.08em) */
+  --tracking-1: 0.01em;
+  --tracking-4: 0.04em;
+  --tracking-6: 0.06em;
+  --tracking-8: 0.08em;
+  --tracking-12: 0.12em;
+  --tracking-13: 0.13em;
   --tracking-title: 0.14em;
 
   /* 출처 패널 시트 폭. min() 이라 --spacing 눈금으로 표현할 수 없어 별도 등록한다 */

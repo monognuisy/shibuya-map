@@ -8,7 +8,7 @@
 
 <div class="fixed bottom-14 left-1/2 z-10 -translate-x-1/2">
   <button
-    class="cursor-pointer rounded-4 border border-line bg-panel/90 px-10 py-4 font-mono text-2xs tracking-title text-tx3 uppercase hover:border-line2 hover:text-tx2"
+    class="cursor-pointer rounded-4 border border-line bg-panel/90 px-10 py-4 font-mono text-2xs tracking-8 text-tx3 uppercase hover:border-line2 hover:text-tx2"
     onclick={() => (open = !open)}>데이터 출처 · 라이선스</button
   >
   {#if open && meta}
@@ -18,7 +18,7 @@
         onclick={() => (open = false)}
         aria-label="닫기">×</button
       >
-      <h3 class="mb-8 font-mono text-sm tracking-title text-tx3 uppercase">데이터 출처</h3>
+      <h3 class="mb-8 font-mono text-sm tracking-12 text-tx3 uppercase">데이터 출처</h3>
       <ul class="m-0 grid list-none gap-9 p-0">
         {#each meta.sources as s (s.key)}
           <li class="grid gap-2">
