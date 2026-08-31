@@ -120,6 +120,13 @@ export const LINK_SOURCES = {
     url: 'https://www.watch.impress.co.jp/docs/news/2029501.html',
     kind: 'press',
   },
+  'mlit-nishi-chika': {
+    title:
+      '국토교통성 관동지방정비국 도쿄국도사무소「渋⾕駅⻄⼝地下歩道が開通し、歩行者動線が変わります」',
+    url: 'https://www.ktr.mlit.go.jp/kisha/kisha_01463.pdf',
+    revision: '2024-07-01',
+    kind: 'official',
+  },
   osm: {
     title: 'OpenStreetMap — 승강장·통로 형상과 level 태그',
     url: 'https://www.openstreetmap.org/',
