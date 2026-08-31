@@ -12,6 +12,7 @@
   import ControlPanel from './ControlPanel.svelte';
   import Inspector from './Inspector.svelte';
   import LevelRail from './LevelRail.svelte';
+  import Pane from './Pane.svelte';
   import RoutePanel from './RoutePanel.svelte';
 
   let { dataUrl }: { dataUrl: string } = $props();
@@ -213,15 +214,18 @@
 
 <svelte:window onkeydown={onKey} />
 
-<div class="app">
-  <div class="stage" bind:this={stage}></div>
-  <div class="labels" bind:this={labelHost}></div>
+<div class="fixed inset-0">
+  <div class="absolute inset-0" bind:this={stage}></div>
+  <div class="pointer-events-none absolute inset-0 overflow-hidden" bind:this={labelHost}></div>
 
-  <header class="pane head">
-    <h1>SHIBUYA STATION</h1>
-    <p class="sub">시부야역 입체 보행 네트워크</p>
+  <header
+    class="fixed top-14 left-14 z-10 max-w-288 rounded-6 border border-line bg-panel/94 px-14 py-12
+           backdrop-blur-12"
+  >
+    <h1 class="m-0 font-mono text-base font-semibold tracking-title text-tx">SHIBUYA STATION</h1>
+    <p class="mt-3 text-sm text-tx3">시부야역 입체 보행 네트워크</p>
     {#if app.doc}
-      <p class="asof">
+      <p class="mt-7 font-mono text-2xs tracking-4 text-amber">
         공식 보행망 {app.doc.meta.counts.mlitLinks} 링크 · OSM {app.doc.meta.counts.osmSegments} 구간
         · 역 구내 {app.doc.meta.counts.curatedPlaces} 지점
       </p>
@@ -229,9 +233,13 @@
   </header>
 
   {#if app.error}
-    <div class="pane err">지도를 표시할 수 없습니다. <code>{app.error}</code></div>
+    <Pane class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 px-18 py-14 text-11 text-tx2">
+      지도를 표시할 수 없습니다. <code class="mt-6 block text-10 text-tx3">{app.error}</code>
+    </Pane>
   {:else if !app.doc}
-    <div class="pane loading">데이터 로딩 중…</div>
+    <Pane class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 px-18 py-14 text-11 text-tx2">
+      데이터 로딩 중…
+    </Pane>
   {:else}
     {#if app.navOn}
       <NavBar {app} />
@@ -243,63 +251,3 @@
     <Attribution {app} />
   {/if}
 </div>
-
-<style>
-  .app {
-    position: fixed;
-    inset: 0;
-  }
-  .stage {
-    position: absolute;
-    inset: 0;
-  }
-  .labels {
-    position: absolute;
-    inset: 0;
-    overflow: hidden;
-    pointer-events: none;
-  }
-  .head {
-    position: fixed;
-    top: 14px;
-    left: 14px;
-    padding: 12px 14px;
-    max-width: 288px;
-  }
-  h1 {
-    font-family: var(--mono);
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.14em;
-    color: var(--tx);
-    margin: 0;
-  }
-  .sub {
-    font-size: 10.5px;
-    color: var(--tx3);
-    margin: 3px 0 0;
-  }
-  .asof {
-    font-family: var(--mono);
-    font-size: 9px;
-    color: var(--amber);
-    margin: 7px 0 0;
-    letter-spacing: 0.04em;
-  }
-  .loading,
-  .err {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    padding: 14px 18px;
-    font-size: 11px;
-    color: var(--tx2);
-  }
-  .err code {
-    display: block;
-    margin-top: 6px;
-    font-size: 10px;
-    color: var(--tx3);
-  }
-</style>
