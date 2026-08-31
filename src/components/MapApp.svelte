@@ -194,13 +194,25 @@
     vertical: 6,
   };
 
+  /** 매 프레임 새 배열을 만들지 않으려고 정렬용 배열을 한 번만 잡아 재사용한다 */
+  let labelOrder: LabelBox[] = [];
+  /** 직전 프레임에 쓴 클래스 상태. 같은 값을 다시 쓰면 스타일 재계산만 부른다 */
+  const labelState = new Map<string, number>();
+  const occupied = new Set<string>();
+
   function positionLabels(labels: LabelBox[]) {
-    const occupied = new Set<string>();
-    const sorted = [...labels].sort(
+    occupied.clear();
+    if (labelOrder.length !== labels.length) labelOrder = [...labels];
+    labelOrder.sort(
       (a, b) =>
         (LABEL_RANK[a.kind] ?? 9) - (LABEL_RANK[b.kind] ?? 9) || a.screen.depth - b.screen.depth,
     );
-    for (const l of sorted) {
+    const hostW = labelHost.clientWidth;
+    const hostH = labelHost.clientHeight;
+    // 폰에서는 라벨이 커지고 화면이 좁아 더 성기게 걸러야 겹치지 않는다
+    const cw = compact ? 116 : 132;
+    const ch = compact ? 32 : 26;
+    for (const l of labelOrder) {
       const el = labelEls.get(l.id);
       if (!el) continue;
       const s = l.screen;
@@ -209,18 +221,19 @@
         s.depth < 1 &&
         s.x > -60 &&
         s.y > -20 &&
-        s.x < labelHost.clientWidth + 60 &&
-        s.y < labelHost.clientHeight + 20;
-      // 폰에서는 라벨이 커지고 화면이 좁아 더 성기게 걸러야 겹치지 않는다
-      const cw = compact ? 116 : 132;
-      const ch = compact ? 32 : 26;
+        s.x < hostW + 60 &&
+        s.y < hostH + 20;
       const cell = `${Math.round(s.x / cw)}:${Math.round(s.y / ch)}`;
       const selected = app.selectedId === l.id;
       const show = onScreen && (selected || !occupied.has(cell));
       if (show && !selected) occupied.add(cell);
-      el.classList.toggle('hide', !show);
-      el.classList.toggle('sel', selected);
-      el.classList.toggle('plan', l.planned);
+      const state = (show ? 1 : 0) | (selected ? 2 : 0) | (l.planned ? 4 : 0);
+      if (labelState.get(l.id) !== state) {
+        labelState.set(l.id, state);
+        el.classList.toggle('hide', !show);
+        el.classList.toggle('sel', selected);
+        el.classList.toggle('plan', l.planned);
+      }
       if (show) el.style.transform = `translate(${s.x}px, ${s.y}px) translate(-50%, -50%)`;
     }
   }

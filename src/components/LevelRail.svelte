@@ -38,7 +38,7 @@
       : 'bg-transparent text-tx3 hover:bg-panel2 hover:text-tx2'}"
     onclick={() => choose(id !== null && active ? null : id)}
   >
-    <span class="w-28 font-medium">{code}</span>
+    <span class="w-28 font-medium compact:w-full compact:text-center">{code}</span>
     {#if !collapsible}
       <span class="font-sans text-xs compact:text-sm {active ? 'opacity-85' : 'opacity-70'}"
         >{label}</span
@@ -48,7 +48,8 @@
 {/snippet}
 
 <nav
-  class="flex flex-col gap-1 rounded-6 border border-line bg-panel/94 p-6 backdrop-blur-12"
+  class="flex flex-col gap-1 rounded-6 border border-line bg-panel/94 p-6 backdrop-blur-12
+         compact:w-64"
   aria-label="층 선택"
 >
   {#if collapsible}

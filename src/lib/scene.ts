@@ -665,8 +665,21 @@ export class MapScene {
 
   /* -------------------------------------------------------------- 입력 */
 
+  /** dispose 에서 걷어낼 문서 수준 리스너 */
+  private unbind: (() => void)[] = [];
+
   private bindInput() {
     const cv = this.renderer.domElement;
+    const doc = cv.ownerDocument;
+
+    /**
+     * 지도 표면으로 치는 것. 라벨은 캔버스 위에 떠 있지만 지도의 일부다 —
+     * 라벨에서 시작한 손가락이 빠지면 두 손가락이 모이지 않아 줌이 성립하지 않는다.
+     */
+    const onSurface = (t: EventTarget | null) =>
+      t === cv || (t instanceof Element && t.closest('.lb') !== null);
+    /** 라벨에서 시작한 탭은 라벨 자신의 click 이 처리하므로 pick 하지 않는다 */
+    let onLabel = false;
 
     /** 눌려 있는 포인터. 터치는 여럿일 수 있다. */
     const pts = new Map<number, Pt>();
@@ -701,18 +714,19 @@ export class MapScene {
       this.target.addScaledVector(right, -dx * s).addScaledVector(fwd, -dy * s);
     };
 
-    cv.addEventListener('pointerdown', (e) => {
-      pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
-      if (pts.size === 1) {
+    const down = (e: PointerEvent) => {
+      if (!onSurface(e.target)) return;
+      if (pts.size === 0) {
         moved = 0;
         button = e.button;
+        onLabel = e.target !== cv;
       }
+      pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
       if (pts.size === 2) pinch = twoOf();
-      cv.setPointerCapture(e.pointerId);
       cv.classList.add('dragging');
-    });
+    };
 
-    cv.addEventListener('pointermove', (e) => {
+    const onMove = (e: PointerEvent) => {
       const p = pts.get(e.pointerId);
       if (!p) return;
       const dx = e.clientX - p.x;
@@ -737,7 +751,7 @@ export class MapScene {
       // 포인터 하나. 터치는 팬, 마우스는 지금까지와 같다.
       if (e.pointerType === 'touch' || button === 2 || e.shiftKey) pan(dx, dy);
       else rotate(dx, dy);
-    });
+    };
 
     const release = (e: PointerEvent, canPick: boolean) => {
       const wasSingle = pts.size === 1;
@@ -747,11 +761,27 @@ export class MapScene {
       cv.classList.remove('dragging');
       // 손가락은 마우스보다 굵어 가만히 눌러도 몇 px 이 움직인다
       const slop = e.pointerType === 'touch' ? 10 : 5;
-      if (canPick && wasSingle && moved < slop) this.pick(e);
+      if (canPick && !onLabel && wasSingle && moved < slop) this.pick(e);
     };
-    cv.addEventListener('pointerup', (e) => release(e, true));
+    const up = (e: PointerEvent) => release(e, true);
     // 취소는 손을 뗀 것이 아니라 브라우저가 가로챈 것이다. 선택으로 세지 않는다.
-    cv.addEventListener('pointercancel', (e) => release(e, false));
+    const cancel = (e: PointerEvent) => release(e, false);
+
+    /*
+     * 캔버스가 아니라 문서에 건다. 라벨 위에서 시작한 손가락도 받아야 하고,
+     * 손가락이 패널 위로 미끄러져도 제스처가 끊기지 않아야 한다.
+     */
+    doc.addEventListener('pointerdown', down);
+    doc.addEventListener('pointermove', onMove);
+    doc.addEventListener('pointerup', up);
+    doc.addEventListener('pointercancel', cancel);
+    this.unbind.push(() => {
+      doc.removeEventListener('pointerdown', down);
+      doc.removeEventListener('pointermove', onMove);
+      doc.removeEventListener('pointerup', up);
+      doc.removeEventListener('pointercancel', cancel);
+    });
+
     cv.addEventListener('contextmenu', (e) => e.preventDefault());
 
     cv.addEventListener(
@@ -887,6 +917,8 @@ export class MapScene {
 
   dispose() {
     this.disposed = true;
+    for (const off of this.unbind) off();
+    this.unbind = [];
     cancelAnimationFrame(this.frame);
     this.renderer.dispose();
     this.renderer.domElement.remove();
