@@ -657,7 +657,7 @@ export const CURATED_LINKS: CuratedLink[] = [
    * 엘리베이터. 각 사업자가 공표한 배리어프리 경로(엘리베이터로 지상까지
    * 이동 가능한 경로)를 기준으로 넣었다. 배리어프리 탐색은 이 링크들만 쓴다.
    */
-  { from: 'plat-jr-yamanote', to: 'gate-jr-chuo', kind: 'elevator', note: '2F ↔ 3F 엘리베이터' },
+  { from: 'plat-jr-yamanote', to: 'gate-jr-minami', kind: 'elevator', note: '2F ↔ 1F 엘리베이터. 야마노테선 홈에서 엘리베이터로 직접 갈 수 있는 개찰은 여기뿐이고, 중앙개찰은 사이쿄선 홈을 거쳐야 한다' },
   { from: 'plat-jr-saikyo', to: 'gate-jr-chuo', kind: 'elevator', note: '2F ↔ 3F 엘리베이터' },
   { from: 'plat-jr-saikyo', to: 'gate-jr-shinminami', kind: 'elevator', note: '남쪽 끝 엘리베이터' },
   { from: 'plat-ginza', to: 'gate-gz-meiji', kind: 'elevator', note: '3F ↔ 1F 엘리베이터' },
@@ -670,8 +670,6 @@ export const CURATED_LINKS: CuratedLink[] = [
   { from: 'plat-toyoko-fukutoshin-56', to: 'gate-ty-miyachuo', kind: 'elevator', note: 'B5 ↔ B2 직통 엘리베이터' },
   { from: 'plat-toyoko-fukutoshin-34', to: 'gate-ty-hikarie1', kind: 'elevator', note: 'B5 ↔ B3 엘리베이터' },
   { from: 'plat-toyoko-fukutoshin-56', to: 'gate-ty-hikarie1', kind: 'elevator', note: 'B5 ↔ B3 엘리베이터' },
-  { from: 'plat-inokashira', to: 'gate-keio-nishi', kind: 'elevator', note: '2F ↔ 1F 엘리베이터' },
-  { from: 'plat-inokashira', to: 'gate-keio-avenue', kind: 'elevator', note: '2F ↔ 4F 엘리베이터' },
   { from: 'gate-ty-miyachuo', to: 'plaza-east-underground', kind: 'elevator', note: 'B2 지하광장 엘리베이터' },
   { from: 'plaza-east-underground', to: 'gate-gz-meiji', kind: 'elevator', note: 'B2 ↔ 동측 지상 엘리베이터' },
   { from: 'gate-jr-hachiko', to: 'plaza-hachiko', kind: 'elevator', distance: 60, note: '같은 지상 레벨' },
