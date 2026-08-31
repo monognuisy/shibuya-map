@@ -8,6 +8,14 @@
   let { app }: { app: AppState } = $props();
   const it = $derived(app.itinerary);
 
+  /** 근거의 강도를 한 낱말로. 링크 자체가 문헌으로 이어진다. */
+  const SOURCE_WORDS: Record<string, string> = {
+    official: '구내도',
+    press: '보도',
+    osm: 'OSM',
+    secondary: '참고',
+  };
+
   const KIND_WORDS: Record<string, string> = {
     platform: '승강장',
     plaza: '광장',
@@ -62,6 +70,24 @@
           {/if}
           {#if leg.via.length}
             <span class="via">{leg.via.slice(0, 2).join(' · ')}</span>
+          {/if}
+          {#if leg.refs.length || leg.unsourced}
+            <span class="src">
+              {#each leg.refs as r (r)}
+                {@const src = app.doc?.meta.linkSources[r]}
+                {#if src}
+                  <a
+                    href={src.url}
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    data-kind={src.kind}
+                    title="{src.title}{src.revision ? ` (${src.revision})` : ''}"
+                    >{SOURCE_WORDS[src.kind] ?? src.kind}</a
+                  >
+                {/if}
+              {/each}
+              {#if leg.unsourced}<span class="unsourced" title="사업자 공개 자료로 아직 대조하지 못한 구간입니다">미대조</span>{/if}
+            </span>
           {/if}
         </div>
       </li>
@@ -212,6 +238,32 @@
     border-color: var(--line2);
     background: var(--panel2);
   }
+  .src {
+    display: inline-flex;
+    gap: 4px;
+    align-items: baseline;
+  }
+  .src a,
+  .src .unsourced {
+    font-size: 9px;
+    line-height: 1.6;
+    padding: 0 4px;
+    border-radius: 3px;
+    border: 1px solid color-mix(in srgb, currentColor 25%, transparent);
+    color: #7c8a99;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .src a[data-kind='official'] {
+    color: #6fb3a0;
+  }
+  .src a:hover {
+    background: color-mix(in srgb, currentColor 12%, transparent);
+  }
+  .src .unsourced {
+    color: #b58a5a;
+  }
+
   .via {
     font-size: 9.5px;
     color: var(--tx3);

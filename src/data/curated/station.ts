@@ -26,6 +26,7 @@
  * 층 번호는 일본식(1F=1, B1=-1). OSM 의 level 태그 관례와 맞춰 두었다.
  */
 import type { LinkKind, Operator, PlaceKind } from '~/lib/types';
+import type { LinkSourceKey } from './sources';
 
 export interface CuratedPlace {
   id: string;
@@ -58,6 +59,11 @@ export interface CuratedLink {
   kind: LinkKind;
   /** 생략하면 두 지점의 평면거리로 계산 */
   distance?: number;
+  /**
+   * 이 연결이 실재한다는 근거. `LINK_SOURCES` 의 키.
+   * 비어 있으면 아직 대조하지 못한 링크이며, 빌드가 그 수를 보고한다.
+   */
+  source?: LinkSourceKey | LinkSourceKey[];
   barrierFree?: boolean;
   note?: string;
   planned?: boolean;
@@ -604,123 +610,120 @@ export const CURATED_PLACES: CuratedPlace[] = [
 
 export const CURATED_LINKS: CuratedLink[] = [
   // JR 개찰 안
-  { from: 'plat-jr-yamanote', to: 'gate-jr-chuo', kind: 'escalator', note: '2F → 3F 에스컬레이터' },
-  { from: 'plat-jr-yamanote', to: 'gate-jr-hachiko', kind: 'stairs', note: '2F → 1F 계단' },
-  { from: 'plat-jr-yamanote', to: 'gate-jr-minami', kind: 'stairs', note: '남쪽 끝 계단' },
-  { from: 'plat-jr-saikyo', to: 'gate-jr-chuo', kind: 'escalator' },
-  { from: 'plat-jr-saikyo', to: 'gate-jr-minami', kind: 'stairs' },
-  { from: 'plat-jr-saikyo', to: 'gate-jr-shinminami', kind: 'escalator', note: '남쪽 끝' },
-  { from: 'plat-jr-yamanote', to: 'gate-jr-shinminami', kind: 'escalator', note: '남쪽 끝' },
-  { from: 'plat-jr-yamanote', to: 'plat-jr-saikyo', kind: 'transfer', distance: 20, note: '개찰 안 나란히' },
+  { from: 'plat-jr-yamanote', to: 'gate-jr-chuo', kind: 'escalator', note: '2F → 3F 에스컬레이터', source: 'jr-home-ev' },
+  { from: 'plat-jr-yamanote', to: 'gate-jr-hachiko', kind: 'stairs', note: '2F → 1F 계단', source: 'jr-home-ev' },
+  { from: 'plat-jr-yamanote', to: 'gate-jr-minami', kind: 'stairs', note: '남쪽 끝 계단', source: 'jr-home-ev' },
+  { from: 'plat-jr-saikyo', to: 'gate-jr-chuo', kind: 'escalator', source: 'osm' },
+  { from: 'plat-jr-saikyo', to: 'gate-jr-minami', kind: 'stairs', source: 'osm' },
+  { from: 'plat-jr-saikyo', to: 'gate-jr-shinminami', kind: 'escalator', note: '남쪽 끝', source: 'osm' },
+  { from: 'plat-jr-yamanote', to: 'gate-jr-shinminami', kind: 'escalator', note: '남쪽 끝', source: 'osm' },
+  { from: 'plat-jr-yamanote', to: 'plat-jr-saikyo', kind: 'transfer', distance: 20, note: '개찰 안 나란히', source: 'osm' },
 
   // 긴자선
-  { from: 'plat-ginza', to: 'gate-gz-scramble', kind: 'walk' },
-  { from: 'plat-ginza', to: 'gate-gz-hikarie', kind: 'escalator', note: '3F → 2F' },
-  { from: 'plat-ginza', to: 'gate-gz-meiji', kind: 'escalator', note: '3F → 1F' },
+  { from: 'plat-ginza', to: 'gate-gz-scramble', kind: 'walk', source: 'ekizukan-ginza' },
+  { from: 'plat-ginza', to: 'gate-gz-hikarie', kind: 'escalator', note: '3F → 2F', source: 'ekizukan-ginza' },
+  { from: 'plat-ginza', to: 'gate-gz-meiji', kind: 'escalator', note: '3F → 1F', source: 'ekizukan-ginza' },
 
   // 도요코 · 후쿠토신
-  { from: 'plat-toyoko-fukutoshin-34', to: 'conc-b4-transfer', kind: 'escalator', note: 'B5 → B4' },
-  { from: 'plat-toyoko-fukutoshin-56', to: 'conc-b4-transfer', kind: 'escalator', note: 'B5 → B4' },
-  { from: 'plat-toyoko-fukutoshin-34', to: 'plat-toyoko-fukutoshin-56', kind: 'transfer', distance: 16 },
-  { from: 'conc-b4-transfer', to: 'plat-dt-hanzomon', kind: 'escalator', note: 'B4 → B3, 개찰 안 환승' },
-  { from: 'conc-b4-transfer', to: 'gate-ty-hikarie1', kind: 'escalator', note: 'B4 → B3' },
-  { from: 'conc-b4-transfer', to: 'gate-ty-hikarie2', kind: 'escalator', note: 'B4 → B3' },
-  { from: 'conc-b4-transfer', to: 'gate-ty-miyachuo', kind: 'escalator', note: 'B4 → B2' },
-  { from: 'conc-b4-transfer', to: 'gate-ty-miyahigashi', kind: 'escalator', note: 'B4 → B2' },
+  { from: 'plat-toyoko-fukutoshin-34', to: 'conc-b4-transfer', kind: 'escalator', note: 'B5 → B4', source: 'tokyu-map' },
+  { from: 'plat-toyoko-fukutoshin-56', to: 'conc-b4-transfer', kind: 'escalator', note: 'B5 → B4', source: 'tokyu-map' },
+  { from: 'plat-toyoko-fukutoshin-34', to: 'plat-toyoko-fukutoshin-56', kind: 'transfer', distance: 16, source: 'tokyu-map' },
+  { from: 'conc-b4-transfer', to: 'plat-dt-hanzomon', kind: 'escalator', note: 'B4 → B3, 개찰 안 환승', source: 'tokyu-map' },
+  { from: 'conc-b4-transfer', to: 'gate-ty-hikarie1', kind: 'escalator', note: 'B4 → B3', source: 'tokyu-map' },
+  { from: 'conc-b4-transfer', to: 'gate-ty-hikarie2', kind: 'escalator', note: 'B4 → B3', source: 'tokyu-map' },
+  { from: 'conc-b4-transfer', to: 'gate-ty-miyachuo', kind: 'escalator', note: 'B4 → B2', source: 'tokyu-map' },
+  { from: 'conc-b4-transfer', to: 'gate-ty-miyahigashi', kind: 'escalator', note: 'B4 → B2', source: 'tokyu-map' },
 
   // 덴엔토시 · 한조몬
-  { from: 'plat-dt-hanzomon', to: 'gate-dt-hachiko', kind: 'escalator', note: 'B3 → B2' },
-  { from: 'plat-dt-hanzomon', to: 'gate-dt-dogenzaka', kind: 'escalator', note: 'B3 → B2' },
-  { from: 'plat-dt-hanzomon', to: 'gate-ty-miyachuo', kind: 'escalator', note: 'B3 → B2, 공용 개찰' },
+  { from: 'plat-dt-hanzomon', to: 'gate-dt-hachiko', kind: 'escalator', note: 'B3 → B2', source: 'tokyu-map' },
+  { from: 'plat-dt-hanzomon', to: 'gate-dt-dogenzaka', kind: 'escalator', note: 'B3 → B2', source: 'tokyu-map' },
+  { from: 'plat-dt-hanzomon', to: 'gate-ty-miyachuo', kind: 'escalator', note: 'B3 → B2, 공용 개찰', source: 'tokyu-map' },
 
   // 이노카시라선
-  { from: 'plat-inokashira', to: 'gate-keio-chuo', kind: 'walk' },
-  { from: 'plat-inokashira', to: 'gate-keio-nishi', kind: 'stairs', note: '2F → 1F' },
-  { from: 'plat-inokashira', to: 'gate-keio-avenue', kind: 'escalator', note: '2F → 4F' },
+  { from: 'plat-inokashira', to: 'gate-keio-chuo', kind: 'walk', source: 'keio-map' },
+  { from: 'plat-inokashira', to: 'gate-keio-nishi', kind: 'stairs', note: '2F → 1F', source: 'keio-map' },
+  { from: 'plat-inokashira', to: 'gate-keio-avenue', kind: 'escalator', note: '2F → 4F', source: 'keio-map' },
 
   // 개찰 밖 — 지상·데크
-  { from: 'gate-jr-hachiko', to: 'plaza-hachiko', kind: 'walk', distance: 60, note: '동서 연락통로 서쪽 끝으로' },
-  { from: 'gate-keio-chuo', to: 'pass-markcity-free', kind: 'walk' },
-  { from: 'pass-markcity-free', to: 'plaza-hachiko', kind: 'escalator', note: '2F → 1F' },
-  { from: 'gate-jr-chuo', to: 'pass-nishi-deck', kind: 'escalator', note: '3F → 2F' },
-  { from: 'pass-markcity-free', to: 'pass-nishi-deck', kind: 'walk', note: '「내일의 신화」 벽화 아래 개구부 — 같은 2층 평면' },
-  { from: 'pass-nishi-deck', to: 'pass-nishi-hodo', kind: 'walk', note: '후쿠라스 내부 통로 경유' },
-  { from: 'gate-jr-shinminami', to: 'pass-minami-kita-jiyu', kind: 'walk', note: '개찰 정면' },
-  { from: 'pass-minami-kita-jiyu', to: 'pass-ss-stream', kind: 'walk', note: '스트림 3층' },
-  { from: 'pass-minami-kita-jiyu', to: 'pass-minami-kosen', kind: 'walk', distance: 90, note: '사쿠라스테이지 내부 3층 경유' },
+  { from: 'gate-jr-hachiko', to: 'plaza-hachiko', kind: 'walk', distance: 60, note: '동서 연락통로 서쪽 끝으로', source: ['shibukei-hachiko', 'tabiris-hachiko'] },
+  { from: 'gate-keio-chuo', to: 'pass-markcity-free', kind: 'walk', source: 'keio-map' },
+  { from: 'pass-markcity-free', to: 'plaza-hachiko', kind: 'escalator', note: '2F → 1F', source: 'osm' },
+  { from: 'gate-jr-chuo', to: 'pass-nishi-deck', kind: 'escalator', note: '3F → 2F', source: 'shibukei-deck' },
+  { from: 'pass-markcity-free', to: 'pass-nishi-deck', kind: 'walk', note: '「내일의 신화」 벽화 아래 개구부 — 같은 2층 평면', source: 'shibukei-deck' },
+  { from: 'pass-nishi-deck', to: 'pass-nishi-hodo', kind: 'walk', note: '후쿠라스 내부 통로 경유', source: 'metro-deck' },
+  { from: 'gate-jr-shinminami', to: 'pass-minami-kita-jiyu', kind: 'walk', note: '개찰 정면', source: 'impress-minami' },
+  { from: 'pass-minami-kita-jiyu', to: 'pass-ss-stream', kind: 'walk', note: '스트림 3층', source: 'impress-minami' },
+  { from: 'pass-minami-kita-jiyu', to: 'pass-minami-kosen', kind: 'walk', distance: 90, note: '사쿠라스테이지 내부 3층 경유', source: 'impress-minami' },
   { from: 'pass-nishi-hodo', to: 'pass-minami-kita-jiyu', kind: 'escalator', note: '사쿠라스테이지 2F → 3F' },
-  { from: 'gate-gz-scramble', to: 'gate-jr-chuo', kind: 'walk', note: '같은 3층, 바로 옆' },
-  { from: 'gate-gz-hikarie', to: 'pass-ss-hikarie', kind: 'walk' },
+  { from: 'gate-gz-scramble', to: 'gate-jr-chuo', kind: 'walk', note: '같은 3층, 바로 옆', source: 'shibukei-chuo' },
+  { from: 'gate-gz-hikarie', to: 'pass-ss-hikarie', kind: 'walk', source: 'ekizukan-ginza' },
 
   // 개찰 밖 — 지하
-  { from: 'gate-dt-hachiko', to: 'plaza-shibuchika', kind: 'stairs', note: 'B2 → B1 계단' },
-  { from: 'gate-dt-dogenzaka', to: 'plaza-shibuchika', kind: 'stairs', note: 'B2 → B1 계단' },
-  { from: 'plaza-shibuchika', to: 'plaza-hachiko', kind: 'stairs', distance: 120, note: '출구 A7·A8(하치코 앞 교차로) 경유. 하치코개찰 앞 시부치카 계단은 2025-01-26 폐쇄, 2028년 봄 에스컬레이터로 부활 예정' },
-  { from: 'gate-ty-miyachuo', to: 'plaza-east-underground', kind: 'walk' },
-  { from: 'gate-ty-miyahigashi', to: 'plaza-east-underground', kind: 'walk' },
-  { from: 'gate-ty-hikarie1', to: 'plaza-east-underground', kind: 'escalator', note: 'B3 → B2' },
-  { from: 'gate-ty-hikarie2', to: 'plaza-east-underground', kind: 'escalator', note: 'B3 → B2' },
-  { from: 'gate-gz-meiji', to: 'plaza-east-underground', kind: 'escalator', note: '1F → B2' },
+  { from: 'gate-dt-hachiko', to: 'plaza-shibuchika', kind: 'stairs', note: 'B2 → B1 계단', source: 'tokyu-map' },
+  { from: 'gate-dt-dogenzaka', to: 'plaza-shibuchika', kind: 'stairs', note: 'B2 → B1 계단', source: 'tokyu-map' },
+  { from: 'plaza-shibuchika', to: 'plaza-hachiko', kind: 'stairs', distance: 120, note: '출구 A7·A8(하치코 앞 교차로) 경유. 하치코개찰 앞 시부치카 계단은 2025-01-26 폐쇄, 2028년 봄 에스컬레이터로 부활 예정', source: ['tokyu-map', 'tabiris-hachiko'] },
+  { from: 'gate-ty-miyachuo', to: 'plaza-east-underground', kind: 'walk', source: 'tokyu-map' },
+  { from: 'gate-ty-miyahigashi', to: 'plaza-east-underground', kind: 'walk', source: 'tokyu-map' },
+  { from: 'gate-ty-hikarie1', to: 'plaza-east-underground', kind: 'escalator', note: 'B3 → B2', source: 'tokyu-map' },
+  { from: 'gate-ty-hikarie2', to: 'plaza-east-underground', kind: 'escalator', note: 'B3 → B2', source: 'tokyu-map' },
+  { from: 'gate-gz-meiji', to: 'plaza-east-underground', kind: 'escalator', note: '1F → B2', source: 'tokyu-map' },
 
   /*
    * 엘리베이터. 각 사업자가 공표한 배리어프리 경로(엘리베이터로 지상까지
    * 이동 가능한 경로)를 기준으로 넣었다. 배리어프리 탐색은 이 링크들만 쓴다.
    */
-  { from: 'plat-jr-yamanote', to: 'gate-jr-minami', kind: 'elevator', note: '2F ↔ 1F 엘리베이터. 야마노테선 홈에서 엘리베이터로 직접 갈 수 있는 개찰은 여기뿐이고, 중앙개찰은 사이쿄선 홈을 거쳐야 한다' },
-  { from: 'plat-jr-saikyo', to: 'gate-jr-chuo', kind: 'elevator', note: '2F ↔ 3F 엘리베이터' },
-  { from: 'plat-jr-saikyo', to: 'gate-jr-shinminami', kind: 'elevator', note: '남쪽 끝 엘리베이터' },
-  { from: 'plat-ginza', to: 'gate-gz-meiji', kind: 'elevator', note: '3F ↔ 1F 엘리베이터' },
-  { from: 'plat-dt-hanzomon', to: 'gate-ty-miyachuo', kind: 'elevator', note: 'B3 ↔ B2 엘리베이터' },
-  { from: 'plat-toyoko-fukutoshin-34', to: 'conc-b4-transfer', kind: 'elevator', note: 'B5 ↔ B4 엘리베이터' },
-  { from: 'plat-toyoko-fukutoshin-56', to: 'conc-b4-transfer', kind: 'elevator', note: 'B5 ↔ B4 엘리베이터' },
-  { from: 'conc-b4-transfer', to: 'gate-ty-miyachuo', kind: 'elevator', note: 'B4 ↔ B2 엘리베이터' },
-  { from: 'conc-b4-transfer', to: 'gate-ty-hikarie1', kind: 'elevator', note: 'B4 ↔ B3 엘리베이터' },
-  { from: 'plat-toyoko-fukutoshin-34', to: 'gate-ty-miyachuo', kind: 'elevator', note: 'B5 ↔ B2 직통 엘리베이터' },
-  { from: 'plat-toyoko-fukutoshin-56', to: 'gate-ty-miyachuo', kind: 'elevator', note: 'B5 ↔ B2 직통 엘리베이터' },
-  { from: 'plat-toyoko-fukutoshin-34', to: 'gate-ty-hikarie1', kind: 'elevator', note: 'B5 ↔ B3 엘리베이터' },
-  { from: 'plat-toyoko-fukutoshin-56', to: 'gate-ty-hikarie1', kind: 'elevator', note: 'B5 ↔ B3 엘리베이터' },
-  { from: 'gate-ty-miyachuo', to: 'plaza-east-underground', kind: 'elevator', note: 'B2 지하광장 엘리베이터' },
-  { from: 'plaza-east-underground', to: 'gate-gz-meiji', kind: 'elevator', note: 'B2 ↔ 동측 지상 엘리베이터' },
-  { from: 'gate-jr-hachiko', to: 'plaza-hachiko', kind: 'elevator', distance: 60, note: '같은 지상 레벨' },
-  { from: 'gate-keio-chuo', to: 'pass-markcity-free', kind: 'elevator', note: '마크시티 2F 평면' },
-  { from: 'pass-markcity-free', to: 'plaza-hachiko', kind: 'elevator', note: '마크시티 2F ↔ 하치코 광장 엘리베이터' },
+  { from: 'plat-jr-yamanote', to: 'gate-jr-minami', kind: 'elevator', note: '2F ↔ 1F 엘리베이터. 야마노테선 홈에서 엘리베이터로 직접 갈 수 있는 개찰은 여기뿐이고, 중앙개찰은 사이쿄선 홈을 거쳐야 한다', source: ['jr-home-ev', 'ekikara-ev'] },
+  { from: 'plat-jr-saikyo', to: 'gate-jr-chuo', kind: 'elevator', note: '2F ↔ 3F 엘리베이터', source: ['jr-home-ev', 'ekikara-ev'] },
+  { from: 'plat-jr-saikyo', to: 'gate-jr-shinminami', kind: 'elevator', note: '남쪽 끝 엘리베이터', source: 'ekikara-ev' },
+  { from: 'plat-ginza', to: 'gate-gz-meiji', kind: 'elevator', note: '3F ↔ 1F 엘리베이터', source: 'ekikara-ev' },
+  { from: 'plat-dt-hanzomon', to: 'gate-ty-miyachuo', kind: 'elevator', note: 'B3 ↔ B2 엘리베이터', source: 'tokyu-map' },
+  { from: 'plat-toyoko-fukutoshin-34', to: 'conc-b4-transfer', kind: 'elevator', note: 'B5 ↔ B4 엘리베이터', source: 'tokyu-map' },
+  { from: 'plat-toyoko-fukutoshin-56', to: 'conc-b4-transfer', kind: 'elevator', note: 'B5 ↔ B4 엘리베이터', source: 'tokyu-map' },
+  { from: 'conc-b4-transfer', to: 'gate-ty-miyachuo', kind: 'elevator', note: 'B4 ↔ B2 엘리베이터', source: 'tokyu-map' },
+  { from: 'conc-b4-transfer', to: 'gate-ty-hikarie1', kind: 'elevator', note: 'B4 ↔ B3 엘리베이터', source: 'tokyu-map' },
+  { from: 'plat-toyoko-fukutoshin-34', to: 'gate-ty-miyachuo', kind: 'elevator', note: 'B5 ↔ B2 직통 엘리베이터', source: 'tokyu-map' },
+  { from: 'plat-toyoko-fukutoshin-56', to: 'gate-ty-miyachuo', kind: 'elevator', note: 'B5 ↔ B2 직통 엘리베이터', source: 'tokyu-map' },
+  { from: 'plat-toyoko-fukutoshin-34', to: 'gate-ty-hikarie1', kind: 'elevator', note: 'B5 ↔ B3 엘리베이터', source: 'tokyu-map' },
+  { from: 'plat-toyoko-fukutoshin-56', to: 'gate-ty-hikarie1', kind: 'elevator', note: 'B5 ↔ B3 엘리베이터', source: 'tokyu-map' },
+  { from: 'gate-ty-miyachuo', to: 'plaza-east-underground', kind: 'elevator', note: 'B2 지하광장 엘리베이터', source: 'tokyu-map' },
+  { from: 'plaza-east-underground', to: 'gate-gz-meiji', kind: 'elevator', note: 'B2 ↔ 동측 지상 엘리베이터', source: 'tokyu-map' },
+  { from: 'pass-markcity-free', to: 'plaza-hachiko', kind: 'elevator', note: '마크시티 2F ↔ 하치코 광장 엘리베이터', source: 'keio-bf' },
   { from: 'gate-jr-chuo', to: 'pass-nishi-deck', kind: 'elevator', note: '3F ↔ 2F 엘리베이터' },
-  { from: 'gate-jr-shinminami', to: 'pass-minami-kita-jiyu', kind: 'elevator', note: '개찰 정면 평면' },
 
   /*
    * 주요 건물과 역의 접속. 건물 지점은 OSM 발자국의 중심점이라 거리가
    * 실제 개찰~입구 도보 거리와 정확히 같지는 않지만, 접속 관계 자체는 실제다.
    */
-  { from: 'bldg-scramble-square@3', to: 'gate-jr-chuo', kind: 'walk', note: '3층 직결' },
-  { from: 'bldg-scramble-square@3', to: 'gate-gz-scramble', kind: 'walk', note: '3층 직결' },
+  { from: 'bldg-scramble-square@3', to: 'gate-jr-chuo', kind: 'walk', note: '3층 직결', source: 'shibukei-chuo' },
+  { from: 'bldg-scramble-square@3', to: 'gate-gz-scramble', kind: 'walk', note: '3층 직결', source: 'shibukei-chuo' },
   { from: 'bldg-scramble-square@3', to: 'pass-ss-stream', kind: 'walk', note: '3층 데크' },
   { from: 'bldg-scramble-square@2', to: 'pass-ss-hikarie', kind: 'walk', note: '2층 연결통로' },
   { from: 'bldg-scramble-square@-2', to: 'plaza-east-underground', kind: 'walk', note: '지하 2층 직결' },
-  { from: 'bldg-hikarie@-3', to: 'gate-ty-hikarie1', kind: 'walk', note: '지하 3층 직결' },
-  { from: 'bldg-hikarie@-3', to: 'gate-ty-hikarie2', kind: 'walk', note: '지하 3층 직결' },
+  { from: 'bldg-hikarie@-3', to: 'gate-ty-hikarie1', kind: 'walk', note: '지하 3층 직결', source: 'tokyu-map' },
+  { from: 'bldg-hikarie@-3', to: 'gate-ty-hikarie2', kind: 'walk', note: '지하 3층 직결', source: 'tokyu-map' },
   { from: 'bldg-hikarie@2', to: 'pass-ss-hikarie', kind: 'walk', note: '2층 연결통로' },
   { from: 'bldg-stream@3', to: 'pass-ss-stream', kind: 'walk', note: '3층 데크' },
-  { from: 'bldg-stream@3', to: 'pass-minami-kita-jiyu', kind: 'walk', note: '자유통로 동쪽 끝' },
+  { from: 'bldg-stream@3', to: 'pass-minami-kita-jiyu', kind: 'walk', note: '자유통로 동쪽 끝', source: 'impress-minami' },
   { from: 'bldg-stream-hall@1', to: 'bldg-stream@1', kind: 'walk' },
-  { from: 'bldg-fukuras@2', to: 'pass-nishi-deck', kind: 'walk', note: '2층 접속 데크' },
-  { from: 'bldg-fukuras@2', to: 'pass-nishi-hodo', kind: 'walk', note: '건물 내부 통로' },
-  { from: 'bldg-markcity-east@2', to: 'pass-markcity-free', kind: 'walk', note: '2층 자유통로' },
-  { from: 'bldg-markcity-east@2', to: 'gate-keio-chuo', kind: 'walk', note: '중앙 출입구 직결' },
-  { from: 'bldg-markcity-east@4', to: 'gate-keio-avenue', kind: 'walk', note: 'WEST 4층 아베뉴 출입구' },
-  { from: 'bldg-sakura-shibuya@3', to: 'pass-minami-kita-jiyu', kind: 'walk', note: '자유통로 서쪽 끝' },
-  { from: 'bldg-sakura-shibuya@3', to: 'pass-minami-kosen', kind: 'walk', note: '남쪽 육교 서쪽 끝' },
+  { from: 'bldg-fukuras@2', to: 'pass-nishi-deck', kind: 'walk', note: '2층 접속 데크', source: 'metro-deck' },
+  { from: 'bldg-fukuras@2', to: 'pass-nishi-hodo', kind: 'walk', note: '건물 내부 통로', source: 'metro-deck' },
+  { from: 'bldg-markcity-east@2', to: 'pass-markcity-free', kind: 'walk', note: '2층 자유통로', source: 'keio-map' },
+  { from: 'bldg-markcity-east@2', to: 'gate-keio-chuo', kind: 'walk', note: '중앙 출입구 직결', source: 'keio-map' },
+  { from: 'bldg-markcity-east@4', to: 'gate-keio-avenue', kind: 'walk', note: 'WEST 4층 아베뉴 출입구', source: 'keio-map' },
+  { from: 'bldg-sakura-shibuya@3', to: 'pass-minami-kita-jiyu', kind: 'walk', note: '자유통로 서쪽 끝', source: 'impress-minami' },
+  { from: 'bldg-sakura-shibuya@3', to: 'pass-minami-kosen', kind: 'walk', note: '남쪽 육교 서쪽 끝', source: 'impress-minami' },
   { from: 'bldg-sakura-central@3', to: 'bldg-sakura-shibuya@3', kind: 'walk' },
   { from: 'bldg-sakura-central@3', to: 'bldg-sakura-sakura@3', kind: 'walk' },
   { from: 'bldg-station-shinminami@3', to: 'gate-jr-shinminami', kind: 'walk' },
-  { from: 'bldg-station-main@1', to: 'gate-jr-hachiko', kind: 'walk' },
-  { from: 'bldg-station-main@1', to: 'plaza-hachiko', kind: 'walk' },
-  { from: 'bldg-station-main@2', to: 'pass-nishi-deck', kind: 'walk', note: '2층 서측 데크' },
-  { from: 'bldg-station-main@3', to: 'gate-jr-chuo', kind: 'walk', note: '3층 중앙개찰' },
+  { from: 'bldg-station-main@1', to: 'gate-jr-hachiko', kind: 'walk', source: 'shibukei-hachiko' },
+  { from: 'bldg-station-main@1', to: 'plaza-hachiko', kind: 'walk', source: 'shibukei-hachiko' },
+  { from: 'bldg-station-main@2', to: 'pass-nishi-deck', kind: 'walk', note: '2층 서측 데크', source: 'metro-deck' },
+  { from: 'bldg-station-main@3', to: 'gate-jr-chuo', kind: 'walk', note: '3층 중앙개찰', source: 'shibukei-chuo' },
 
   // 공사 중 (기본 경로 탐색에서 제외)
-  { from: 'plan-skyway', to: 'plan-hikarie-deck', kind: 'walk', planned: true },
-  { from: 'plan-skyway', to: 'plan-ss-central-west', kind: 'walk', planned: true },
-  { from: 'plan-ss-central-west', to: 'plan-urban-core-west', kind: 'walk', planned: true },
-  { from: 'plan-urban-core-west', to: 'plaza-hachiko', kind: 'elevator', planned: true, note: '1F ↔ 4F 수직 이동축' },
-  { from: 'plan-ss-central-west', to: 'gate-jr-chuo', kind: 'escalator', planned: true },
+  { from: 'plan-skyway', to: 'plan-hikarie-deck', kind: 'walk', planned: true, source: 'tokyu-future' },
+  { from: 'plan-skyway', to: 'plan-ss-central-west', kind: 'walk', planned: true, source: 'tokyu-future' },
+  { from: 'plan-ss-central-west', to: 'plan-urban-core-west', kind: 'walk', planned: true, source: 'tokyu-future' },
+  { from: 'plan-urban-core-west', to: 'plaza-hachiko', kind: 'elevator', planned: true, note: '1F ↔ 4F 수직 이동축', source: 'tokyu-future' },
+  { from: 'plan-ss-central-west', to: 'gate-jr-chuo', kind: 'escalator', planned: true, source: 'tokyu-future' },
 ];

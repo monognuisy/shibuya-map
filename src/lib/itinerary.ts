@@ -28,6 +28,10 @@ export interface Leg {
   arrivalDetail?: string;
   /** 3D 하이라이트·내비게이션용 노드 나열 */
   nodes: number[];
+  /** 이 구간을 이루는 자체 작성 링크의 근거. meta.linkSources 의 키. */
+  refs: string[];
+  /** 근거가 아직 없는 자체 작성 링크를 포함하는가 */
+  unsourced: boolean;
   /** route.nodes 안에서 이 구간이 끝나는 위치 */
   endIndex: number;
 }
@@ -80,6 +84,8 @@ export function buildItinerary(doc: MapDoc, route: RouteResult): Itinerary {
       paid,
       via: [],
       nodes: [step.from],
+      refs: [],
+      unsourced: false,
       endIndex: idx,
     };
 
@@ -88,6 +94,13 @@ export function buildItinerary(doc: MapDoc, route: RouteResult): Itinerary {
     cur.nodes.push(step.to);
     if (step.edge.n && !HIDDEN_NOTES.test(step.edge.n) && !cur.via.includes(step.edge.n)) {
       cur.via.push(step.edge.n);
+    }
+    if (step.edge.src === 'curated' && !HIDDEN_NOTES.test(step.edge.n ?? '')) {
+      if (step.edge.r?.length) {
+        for (const r of step.edge.r) if (!cur.refs.includes(r)) cur.refs.push(r);
+      } else {
+        cur.unsourced = true;
+      }
     }
     if (step.edge.v && !cur.vertical) {
       cur.vertical = doc.places.find((p) => p.id === step.edge.v);

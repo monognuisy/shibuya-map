@@ -84,6 +84,8 @@ export interface EdgeDoc {
   /** 이 링크가 속한 수직 동선 지점 id */
   v?: string;
   src: EdgeSource;
+  /** 이 링크가 실재한다는 근거. meta.linkSources 의 키. 없으면 미대조 */
+  r?: string[];
   /** 공사중 */
   p?: 1;
   /** 비고 */
@@ -102,6 +104,11 @@ export interface MapDoc {
       license: string;
       fetchedAt: string;
     }[];
+    /** 자체 작성 링크의 근거 문헌. EdgeDoc.r 이 이 키를 가리킨다. */
+    linkSources: Record<
+      string,
+      { title: string; url: string; revision?: string; kind: string }
+    >;
     counts: Record<string, number>;
   };
   buildings: BuildingDoc[];

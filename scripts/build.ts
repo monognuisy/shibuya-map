@@ -24,6 +24,7 @@ import {
 } from '../src/lib/osm.ts';
 import { LANDMARK_BY_NAME } from '../src/data/curated/buildings.ts';
 import { CURATED_LINKS, CURATED_PLACES } from '../src/data/curated/station.ts';
+import { LINK_SOURCES } from '../src/data/curated/sources.ts';
 import type { LinkKind } from '../src/lib/types.ts';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -95,6 +96,8 @@ interface GEdge {
   /** 이 링크가 속한 수직 동선(계단·에스컬레이터·EV) 지점 id */
   vertical?: string;
   src: Src;
+  /** 이 링크가 실재한다는 근거. LINK_SOURCES 의 키. */
+  ref?: string[];
   planned?: boolean;
   /** 중간 형상 (있을 때만) */
   path?: [number, number][];
@@ -565,6 +568,7 @@ function loadCurated(external: Map<string, number>): PlaceOut[] {
       // 개찰 안 콘코스면 그 링크는 개찰 안쪽을 지난다.
       paid: paidOf.get(baseId(l.from)) || paidOf.get(baseId(l.to)),
       src: 'curated',
+      ref: l.source === undefined ? undefined : [l.source].flat(),
       planned: l.planned,
       note: l.note,
     });
@@ -1037,6 +1041,7 @@ async function main() {
       origin: ORIGIN,
       radius: RADIUS,
       sources,
+      linkSources: LINK_SOURCES,
       counts: {
         mlitNodes: mlit.nodes,
         mlitLinks: mlit.links,
@@ -1052,6 +1057,7 @@ async function main() {
         droppedPlaces: dropped.length,
         platformShapesMatched: shapesMatched,
         curatedLinks: CURATED_LINKS.length,
+        curatedLinksSourced: CURATED_LINKS.filter((l) => l.source !== undefined).length,
         stitched,
         graphNodes: nodes.length,
         graphEdges: edges.length,
@@ -1075,6 +1081,7 @@ async function main() {
         ...(e.paid ? { paid: 1 as const } : {}),
         ...(e.vertical ? { v: e.vertical } : {}),
         src: e.src,
+        ...(e.ref?.length ? { r: e.ref } : {}),
         ...(e.planned ? { p: 1 } : {}),
         ...(e.note ? { n: e.note } : {}),
       })),
@@ -1096,6 +1103,13 @@ async function main() {
   );
   if (dropped.length) {
     console.warn(`\n주 네트워크에 닿지 않아 제외한 OSM 지점 ${dropped.length}개: ${dropped.join(', ')}`);
+  }
+  const unsourced = CURATED_LINKS.filter((l) => l.source === undefined);
+  if (unsourced.length) {
+    console.warn(
+      `\n근거 문헌이 아직 없는 curated 링크 ${unsourced.length}개:\n` +
+        unsourced.map((l) => `  ${l.from} → ${l.to} (${l.kind})`).join('\n'),
+    );
   }
   if (comp.size < nodes.length * 0.7) {
     console.warn(
