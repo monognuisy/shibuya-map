@@ -51,6 +51,9 @@
   /* Inspector 설명문 줄간격. Tailwind 기본 leading-relaxed(1.625)와 달라 따로 등록한다 */
   --leading-165: 1.65;
 
+  /* 컴팩트에서 층 목록이 화면을 넘지 않게. 상단바와 아래 여백을 뺀 값이다 */
+  --max-height-rail: calc(100dvh - var(--topbar) - 96px);
+
   /* 출처 패널 시트 폭. min() 이라 --spacing 눈금으로 표현할 수 없어 별도 등록한다 */
   --width-attr-sheet: min(560px, 92vw);
 

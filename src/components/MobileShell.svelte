@@ -51,7 +51,7 @@
 </header>
 
 <div class="fixed right-8 z-10" style="top: calc(72px + env(safe-area-inset-top));">
-  <LevelRail {app} />
+  <LevelRail {app} collapsible />
 </div>
 
 {#if app.navOn && snap !== 'full'}
