@@ -7,6 +7,7 @@
  */
 import * as THREE from 'three';
 
+import { pinchDelta, pinchOf, type Pinch, type Pt } from './gesture';
 import { levelZ } from './levels';
 import { OPERATOR_COLORS, SOURCE_COLORS, VERTICAL_COLORS, hex } from './palette';
 import type { MapDoc, PlaceDoc, XY } from './mapdoc';
@@ -666,27 +667,24 @@ export class MapScene {
 
   private bindInput() {
     const cv = this.renderer.domElement;
-    let drag: { x: number; y: number; button: number } | null = null;
+
+    /** 눌려 있는 포인터. 터치는 여럿일 수 있다. */
+    const pts = new Map<number, Pt>();
+    /** 두 손가락일 때의 직전 상태 */
+    let pinch: Pinch | null = null;
     let moved = 0;
+    let button = 0;
 
-    cv.addEventListener('pointerdown', (e) => {
-      drag = { x: e.clientX, y: e.clientY, button: e.button };
-      moved = 0;
-      cv.setPointerCapture(e.pointerId);
-      cv.classList.add('dragging');
-    });
+    /** 앞의 두 포인터로 핀치 상태를 만든다. 셋 이상이면 나머지는 무시한다. */
+    const twoOf = (): Pinch | null => {
+      const it = pts.values();
+      const a = it.next().value;
+      const b = it.next().value;
+      return a && b ? pinchOf(a, b) : null;
+    };
 
-    cv.addEventListener('pointermove', (e) => {
-      if (!drag) return;
-      const dx = e.clientX - drag.x;
-      const dy = e.clientY - drag.y;
-      moved += Math.abs(dx) + Math.abs(dy);
-      if (drag.button === 2 || e.shiftKey) {
-        const s = this.distance * 0.0016;
-        const right = new THREE.Vector3(Math.cos(this.theta), 0, -Math.sin(this.theta));
-        const fwd = new THREE.Vector3(Math.sin(this.theta), 0, Math.cos(this.theta));
-        this.target.addScaledVector(right, -dx * s).addScaledVector(fwd, -dy * s);
-      } else if (this.follow) {
+    const rotate = (dx: number, dy: number) => {
+      if (this.follow) {
         // 따라가는 중에는 진행 방향을 기준으로 좌우만 돌린다
         this.yawOffset -= dx * 0.005;
         this.phi = clamp(this.phi - dy * 0.005, 0.05, Math.PI / 2 - 0.02);
@@ -694,20 +692,65 @@ export class MapScene {
         this.theta -= dx * 0.005;
         this.phi = clamp(this.phi - dy * 0.005, 0.08, Math.PI / 2 - 0.02);
       }
-      drag.x = e.clientX;
-      drag.y = e.clientY;
+    };
+
+    const pan = (dx: number, dy: number) => {
+      const s = this.distance * 0.0016;
+      const right = new THREE.Vector3(Math.cos(this.theta), 0, -Math.sin(this.theta));
+      const fwd = new THREE.Vector3(Math.sin(this.theta), 0, Math.cos(this.theta));
+      this.target.addScaledVector(right, -dx * s).addScaledVector(fwd, -dy * s);
+    };
+
+    cv.addEventListener('pointerdown', (e) => {
+      pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (pts.size === 1) {
+        moved = 0;
+        button = e.button;
+      }
+      if (pts.size === 2) pinch = twoOf();
+      cv.setPointerCapture(e.pointerId);
+      cv.classList.add('dragging');
     });
 
-    const end = (e: PointerEvent) => {
-      cv.classList.remove('dragging');
-      if (drag && moved < 5) this.pick(e);
-      drag = null;
-    };
-    cv.addEventListener('pointerup', end);
-    cv.addEventListener('pointercancel', () => {
-      cv.classList.remove('dragging');
-      drag = null;
+    cv.addEventListener('pointermove', (e) => {
+      const p = pts.get(e.pointerId);
+      if (!p) return;
+      const dx = e.clientX - p.x;
+      const dy = e.clientY - p.y;
+      p.x = e.clientX;
+      p.y = e.clientY;
+      moved += Math.abs(dx) + Math.abs(dy);
+
+      if (pts.size >= 2) {
+        const next = twoOf();
+        if (pinch && next) {
+          const d = pinchDelta(pinch, next);
+          // 벌리면 가까워진다
+          this.distance = clamp(this.distance / d.scale, 25, 4000);
+          this.theta -= d.rotation;
+          this.phi = clamp(this.phi - d.dy * 0.004, 0.08, Math.PI / 2 - 0.02);
+        }
+        pinch = next;
+        return;
+      }
+
+      // 포인터 하나. 터치는 팬, 마우스는 지금까지와 같다.
+      if (e.pointerType === 'touch' || button === 2 || e.shiftKey) pan(dx, dy);
+      else rotate(dx, dy);
     });
+
+    const release = (e: PointerEvent) => {
+      const wasSingle = pts.size === 1;
+      pts.delete(e.pointerId);
+      if (pts.size < 2) pinch = null;
+      if (pts.size > 0) return;
+      cv.classList.remove('dragging');
+      // 손가락은 마우스보다 굵어 가만히 눌러도 몇 px 이 움직인다
+      const slop = e.pointerType === 'touch' ? 10 : 5;
+      if (wasSingle && moved < slop) this.pick(e);
+    };
+    cv.addEventListener('pointerup', release);
+    cv.addEventListener('pointercancel', release);
     cv.addEventListener('contextmenu', (e) => e.preventDefault());
 
     cv.addEventListener(
