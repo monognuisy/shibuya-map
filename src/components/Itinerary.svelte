@@ -39,233 +39,105 @@
 </script>
 
 {#if it}
-  <ol class="legs">
+  <ol class="mt-9 list-none pl-2">
     {#if it.origin}
-      <li class="stop start">
-        <span class="dot" style="--c:{OPERATOR_COLORS[it.origin.operator]}"></span>
-        <span class="nm">{it.origin.name}</span>
-        <span class="lv">{levelCode(it.origin.level)}</span>
+      <li class="flex items-center gap-7 py-2 text-sm">
+        <span
+          class="ml-1 h-9 w-9 flex-none rounded-full ring-2 ring-bg/90"
+          style="background:var(--color-amber)"
+        ></span>
+        <span class="text-tx">{it.origin.name}</span>
+        <span class="ml-auto flex-none font-mono text-2xs text-tx3">{levelCode(it.origin.level)}</span>
       </li>
     {/if}
 
     {#each rows as { leg, repeat }, i (i)}
+      {@const now = app.navOn && i === app.navLegIndex}
       <li
-        class="move"
-        class:now={app.navOn && i === app.navLegIndex}
+        class="flex items-start gap-7 py-1 text-sm {now ? 'rounded-4 bg-amber/9' : ''}"
         data-kind={leg.kind}
       >
-        <span class="rail" style="--c:{VERTICAL_COLORS[leg.kind] ?? '#5F6C7D'}"></span>
-        <div class="body">
+        <span
+          class="ml-4 w-2 flex-none self-stretch min-h-20 rounded-1 opacity-55"
+          style="background:{VERTICAL_COLORS[leg.kind] ?? '#5F6C7D'}"
+        ></span>
+        <div class="flex flex-wrap items-baseline gap-5 pt-2 pb-4">
           <button
-            class="verb"
+            class="cursor-pointer border-0 bg-transparent p-0 font-sans text-sm
+                   {now ? 'font-medium text-amber' : 'font-light text-tx2 hover:text-tx'}"
             onclick={() => {
               if (app.navT === null) app.navT = 0;
               app.gotoLeg(i);
             }}>{legSummary(leg)}</button
           >
-          <span class="num">{Math.round(leg.distance)} m · {formatDuration(leg.seconds)}</span>
-          {#if leg.paid}<span class="badge paid">개찰 안</span>{/if}
+          <span class="font-mono text-xs text-tx3">{Math.round(leg.distance)} m · {formatDuration(leg.seconds)}</span>
+          {#if leg.paid}<span class="rounded-3 border border-line2 bg-panel2 px-4 text-2xs text-tx2">개찰 안</span>{/if}
           {#if leg.vertical}
-            <span class="badge">{leg.vertical.name}</span>
+            <span class="rounded-3 border border-line2 px-4 text-2xs text-tx3">{leg.vertical.name}</span>
           {/if}
           {#if leg.via.length}
-            <span class="via">{leg.via.slice(0, 2).join(' · ')}</span>
+            <span class="text-xs text-tx3">{leg.via.slice(0, 2).join(' · ')}</span>
           {/if}
           {#if leg.refs.length || leg.unsourced}
-            <span class="src">
+            <span class="inline-flex items-baseline gap-4">
               {#each leg.refs as r (r)}
                 {@const src = app.doc?.meta.linkSources[r]}
                 {#if src}
+                  <!-- #6fb3a0: 근거 배지 official 전용 색. 근거 배지에서만 쓰이는 두 색 중 하나라
+                       계획의 유일한 임의값 예외 (Task 4, 계획 479줄) -->
                   <a
                     href={src.url}
                     target="_blank"
                     rel="noreferrer noopener"
                     data-kind={src.kind}
                     title="{src.title}{src.revision ? ` (${src.revision})` : ''}"
+                    class="rounded-3 border border-current/25 px-4 text-2xs leading-relaxed
+                           whitespace-nowrap text-tx3 no-underline hover:bg-current/12
+                           data-[kind=official]:text-[#6fb3a0]"
                     >{SOURCE_WORDS[src.kind] ?? src.kind}</a
                   >
                 {/if}
               {/each}
-              {#if leg.unsourced}<span class="unsourced" title="사업자 공개 자료로 아직 대조하지 못한 구간입니다">미대조</span>{/if}
+              {#if leg.unsourced}
+                <!-- #b58a5a: 미대조 배지 전용 색. 근거 배지에서만 쓰이는 두 색 중 나머지 하나라
+                     계획의 유일한 임의값 예외 (Task 4, 계획 479줄) -->
+                <span
+                  class="rounded-3 border border-current/25 px-4 text-2xs leading-relaxed
+                         whitespace-nowrap text-[#b58a5a]"
+                  title="사업자 공개 자료로 아직 대조하지 못한 구간입니다">미대조</span
+                >
+              {/if}
             </span>
           {/if}
         </div>
       </li>
 
       {#if leg.arrival}
-        <li class="stop" class:last={i === rows.length - 1} class:repeat>
-          <span class="dot" style="--c:{OPERATOR_COLORS[leg.arrival.operator]}"></span>
+        {@const last = i === rows.length - 1}
+        <li class="flex items-center gap-7 py-2 text-sm">
+          <span
+            class="flex-none rounded-full ring-2 ring-bg/90 {repeat ? 'opacity-70' : ''}
+                   {last ? 'ml-1 h-9 w-9' : repeat ? 'ml-3 h-5 w-5' : 'ml-2 h-7 w-7'}"
+            style="background:{last ? 'var(--color-amber)' : OPERATOR_COLORS[leg.arrival.operator]}"
+          ></span>
           {#if repeat}
-            <span class="nm same">같은 {KIND_WORDS[leg.arrival.kind] ?? '지점'} 안</span>
+            <span class="text-xs text-tx3">같은 {KIND_WORDS[leg.arrival.kind] ?? '지점'} 안</span>
           {:else}
-            <button class="nm" onclick={() => (app.selectedId = leg.arrival!.id)}>
+            <button
+              class="cursor-pointer border-0 bg-transparent p-0 text-left font-sans text-sm
+                     font-light text-tx hover:text-amber"
+              onclick={() => (app.selectedId = leg.arrival!.id)}
+            >
               {leg.arrival.name}
             </button>
           {/if}
-          {#if leg.arrivalDetail}<span class="detail">{leg.arrivalDetail}</span>{/if}
-          <span class="lv">{levelCode(leg.toLevel)}</span>
+          {#if leg.arrivalDetail}<span
+              class="flex-none rounded-3 border border-amber-dim px-4 text-xs text-amber"
+              >{leg.arrivalDetail}</span
+            >{/if}
+          <span class="ml-auto flex-none font-mono text-2xs text-tx3">{levelCode(leg.toLevel)}</span>
         </li>
       {/if}
     {/each}
   </ol>
 {/if}
-
-<style>
-  .legs {
-    list-style: none;
-    margin: 9px 0 0;
-    padding: 0 0 0 2px;
-  }
-  li {
-    display: flex;
-    align-items: flex-start;
-    gap: 7px;
-    font-size: 10.5px;
-  }
-  .stop {
-    align-items: center;
-    padding: 2px 0;
-  }
-  .dot {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: var(--c, var(--tx3));
-    flex: none;
-    margin-left: 2px;
-    box-shadow: 0 0 0 2px rgba(14, 18, 24, 0.9);
-  }
-  .stop.repeat .dot {
-    width: 5px;
-    height: 5px;
-    margin-left: 3px;
-    opacity: 0.7;
-  }
-  .same {
-    color: var(--tx3);
-    font-size: 9.5px;
-  }
-  .stop.start .dot,
-  .stop.last .dot {
-    width: 9px;
-    height: 9px;
-    margin-left: 1px;
-    background: var(--amber);
-  }
-  .nm {
-    color: var(--tx);
-  }
-  button.nm {
-    background: none;
-    border: 0;
-    padding: 0;
-    font: inherit;
-    color: var(--tx);
-    cursor: pointer;
-    text-align: left;
-  }
-  button.nm:hover {
-    color: var(--amber);
-  }
-  .detail {
-    font-size: 9.5px;
-    color: var(--amber);
-    border: 1px solid var(--amber-dim);
-    border-radius: 3px;
-    padding: 0 4px;
-    flex: none;
-  }
-  .lv {
-    font-family: var(--mono);
-    font-size: 9px;
-    color: var(--tx3);
-    margin-left: auto;
-    flex: none;
-  }
-  .move {
-    padding: 1px 0;
-  }
-  .rail {
-    width: 2px;
-    align-self: stretch;
-    min-height: 20px;
-    background: var(--c);
-    opacity: 0.55;
-    margin-left: 4px;
-    flex: none;
-    border-radius: 1px;
-  }
-  .body {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: 5px;
-    padding: 2px 0 4px;
-  }
-  button.verb {
-    background: none;
-    border: 0;
-    padding: 0;
-    font: inherit;
-    color: var(--tx2);
-    cursor: pointer;
-  }
-  button.verb:hover {
-    color: var(--tx);
-  }
-  .move.now {
-    background: rgba(232, 178, 58, 0.09);
-    border-radius: 4px;
-  }
-  .move.now button.verb {
-    color: var(--amber);
-    font-weight: 500;
-  }
-  .num {
-    font-family: var(--mono);
-    font-size: 9.5px;
-    color: var(--tx3);
-  }
-  .badge {
-    font-size: 9px;
-    padding: 0 4px;
-    border-radius: 3px;
-    border: 1px solid var(--line2);
-    color: var(--tx3);
-  }
-  .badge.paid {
-    color: var(--tx2);
-    border-color: var(--line2);
-    background: var(--panel2);
-  }
-  .src {
-    display: inline-flex;
-    gap: 4px;
-    align-items: baseline;
-  }
-  .src a,
-  .src .unsourced {
-    font-size: 9px;
-    line-height: 1.6;
-    padding: 0 4px;
-    border-radius: 3px;
-    border: 1px solid color-mix(in srgb, currentColor 25%, transparent);
-    color: #7c8a99;
-    text-decoration: none;
-    white-space: nowrap;
-  }
-  .src a[data-kind='official'] {
-    color: #6fb3a0;
-  }
-  .src a:hover {
-    background: color-mix(in srgb, currentColor 12%, transparent);
-  }
-  .src .unsourced {
-    color: #b58a5a;
-  }
-
-  .via {
-    font-size: 9.5px;
-    color: var(--tx3);
-  }
-</style>

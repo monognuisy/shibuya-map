@@ -40,6 +40,8 @@
   --radius-11: 11px;
   --radius-12: 12px;
   --blur-12: 12px;
+  /* Itinerary 의 수직 동선 레일 모서리. 기존 눈금(2/3/4/6/11/12)에 없어 추가한다 */
+  --radius-1: 1px;
   /* 자간은 spacing 과 눈금이 달라 따로 등록한다. 이름은 백분율 값이다 (tracking-8 = 0.08em) */
   --tracking-1: 0.01em;
   --tracking-4: 0.04em;
@@ -59,6 +61,9 @@
 
   /* 출처 패널 시트 폭. min() 이라 --spacing 눈금으로 표현할 수 없어 별도 등록한다 */
   --width-attr-sheet: min(560px, 92vw);
+
+  /* 경로 패널 세로 최대 높이. calc() 라 --spacing 눈금으로 표현할 수 없어 별도 등록한다 */
+  --max-height-route: calc(100vh - 28px);
 }
 
 /*
