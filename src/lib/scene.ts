@@ -739,7 +739,7 @@ export class MapScene {
       else rotate(dx, dy);
     });
 
-    const release = (e: PointerEvent) => {
+    const release = (e: PointerEvent, canPick: boolean) => {
       const wasSingle = pts.size === 1;
       pts.delete(e.pointerId);
       if (pts.size < 2) pinch = null;
@@ -747,10 +747,11 @@ export class MapScene {
       cv.classList.remove('dragging');
       // 손가락은 마우스보다 굵어 가만히 눌러도 몇 px 이 움직인다
       const slop = e.pointerType === 'touch' ? 10 : 5;
-      if (wasSingle && moved < slop) this.pick(e);
+      if (canPick && wasSingle && moved < slop) this.pick(e);
     };
-    cv.addEventListener('pointerup', release);
-    cv.addEventListener('pointercancel', release);
+    cv.addEventListener('pointerup', (e) => release(e, true));
+    // 취소는 손을 뗀 것이 아니라 브라우저가 가로챈 것이다. 선택으로 세지 않는다.
+    cv.addEventListener('pointercancel', (e) => release(e, false));
     cv.addEventListener('contextmenu', (e) => e.preventDefault());
 
     cv.addEventListener(
