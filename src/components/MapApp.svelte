@@ -8,6 +8,7 @@
   import { OPERATOR_COLORS } from '~/lib/palette';
 
   import DesktopShell from './DesktopShell.svelte';
+  import MobileShell from './MobileShell.svelte';
   import Pane from './Pane.svelte';
 
   let { dataUrl }: { dataUrl: string } = $props();
@@ -228,19 +229,21 @@
   <div class="absolute inset-0" bind:this={stage}></div>
   <div class="pointer-events-none absolute inset-0 overflow-hidden" bind:this={labelHost}></div>
 
-  <header
-    class="fixed top-14 left-14 z-10 max-w-288 rounded-6 border border-line bg-panel/94 px-14 py-12
-           backdrop-blur-12"
-  >
-    <h1 class="m-0 font-mono text-base font-semibold tracking-title text-tx">SHIBUYA STATION</h1>
-    <p class="mt-3 text-sm text-tx3">시부야역 입체 보행 네트워크</p>
-    {#if app.doc}
-      <p class="mt-6 font-mono text-2xs tracking-4 text-amber">
-        공식 보행망 {app.doc.meta.counts.mlitLinks} 링크 · OSM {app.doc.meta.counts.osmSegments} 구간
-        · 역 구내 {app.doc.meta.counts.curatedPlaces} 지점
-      </p>
-    {/if}
-  </header>
+  {#if !compact}
+    <header
+      class="fixed top-14 left-14 z-10 max-w-288 rounded-6 border border-line bg-panel/94 px-14 py-12
+             backdrop-blur-12"
+    >
+      <h1 class="m-0 font-mono text-base font-semibold tracking-title text-tx">SHIBUYA STATION</h1>
+      <p class="mt-3 text-sm text-tx3">시부야역 입체 보행 네트워크</p>
+      {#if app.doc}
+        <p class="mt-6 font-mono text-2xs tracking-4 text-amber">
+          공식 보행망 {app.doc.meta.counts.mlitLinks} 링크 · OSM {app.doc.meta.counts.osmSegments} 구간
+          · 역 구내 {app.doc.meta.counts.curatedPlaces} 지점
+        </p>
+      {/if}
+    </header>
+  {/if}
 
   {#if app.error}
     <Pane class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 px-18 py-14 text-sm text-tx2">
@@ -252,7 +255,11 @@
     </Pane>
   {:else}
     <div data-compact={compact ? '' : undefined}>
-      <DesktopShell {app} onReset={() => scene?.resetView()} />
+      {#if compact}
+        <MobileShell {app} onReset={() => scene?.resetView()} />
+      {:else}
+        <DesktopShell {app} onReset={() => scene?.resetView()} />
+      {/if}
     </div>
   {/if}
 </div>
