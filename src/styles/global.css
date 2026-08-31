@@ -37,11 +37,8 @@
   --radius-3: 3px;
   --radius-4: 4px;
   --radius-6: 6px;
-  --radius-11: 11px;
   --radius-12: 12px;
   --blur-12: 12px;
-  /* Itinerary 의 수직 동선 레일 모서리. 기존 눈금(2/3/4/6/11/12)에 없어 추가한다 */
-  --radius-1: 1px;
   /* 자간은 spacing 과 눈금이 달라 따로 등록한다. 이름은 백분율 값이다 (tracking-8 = 0.08em) */
   --tracking-1: 0.01em;
   --tracking-4: 0.04em;
@@ -50,11 +47,6 @@
   --tracking-12: 0.12em;
   --tracking-13: 0.13em;
   --tracking-title: 0.14em;
-
-  /* Inspector 에만 쓰이는 폰트 크기. Task 1 눈금(9/9.5/10.5/12/15/19px)에 없어 추가한다 */
-  --text-10: 10px;
-  --text-11: 11px;
-  --text-14: 14px;
 
   /* Inspector 설명문 줄간격. Tailwind 기본 leading-relaxed(1.625)와 달라 따로 등록한다 */
   --leading-165: 1.65;

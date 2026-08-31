@@ -39,11 +39,11 @@
 </script>
 
 {#if it}
-  <ol class="mt-9 list-none pl-2">
+  <ol class="mt-8 list-none pl-2">
     {#if it.origin}
-      <li class="flex items-center gap-7 py-2 text-sm">
+      <li class="flex items-center gap-6 py-2 text-sm">
         <span
-          class="ml-1 h-9 w-9 flex-none rounded-full ring-2 ring-bg/90"
+          class="ml-1 h-8 w-8 flex-none rounded-full ring-2 ring-bg/90"
           style="background:var(--color-amber)"
         ></span>
         <span class="text-tx">{it.origin.name}</span>
@@ -54,14 +54,14 @@
     {#each rows as { leg, repeat }, i (i)}
       {@const now = app.navOn && i === app.navLegIndex}
       <li
-        class="flex items-start gap-7 py-1 text-sm {now ? 'rounded-4 bg-amber/9' : ''}"
+        class="flex items-start gap-6 py-1 text-sm {now ? 'rounded-4 bg-amber/9' : ''}"
         data-kind={leg.kind}
       >
         <span
-          class="ml-4 w-2 flex-none self-stretch min-h-20 rounded-1 opacity-55"
+          class="ml-4 w-2 flex-none self-stretch min-h-20 rounded-2 opacity-55"
           style="background:{VERTICAL_COLORS[leg.kind] ?? '#5F6C7D'}"
         ></span>
-        <div class="flex flex-wrap items-baseline gap-5 pt-2 pb-4">
+        <div class="flex flex-wrap items-baseline gap-4 pt-2 pb-4">
           <button
             class="cursor-pointer border-0 bg-transparent p-0 font-sans text-sm
                    {now ? 'font-medium text-amber' : 'font-light text-tx2 hover:text-tx'}"
@@ -114,10 +114,10 @@
 
       {#if leg.arrival}
         {@const last = i === rows.length - 1}
-        <li class="flex items-center gap-7 py-2 text-sm">
+        <li class="flex items-center gap-6 py-2 text-sm">
           <span
             class="flex-none rounded-full ring-2 ring-bg/90 {repeat ? 'opacity-70' : ''}
-                   {last ? 'ml-1 h-9 w-9' : repeat ? 'ml-3 h-5 w-5' : 'ml-2 h-7 w-7'}"
+                   {last ? 'ml-1 h-8 w-8' : repeat ? 'ml-3 h-4 w-4' : 'ml-2 h-6 w-6'}"
             style="background:{last ? 'var(--color-amber)' : OPERATOR_COLORS[leg.arrival.operator]}"
           ></span>
           {#if repeat}

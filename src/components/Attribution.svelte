@@ -12,14 +12,14 @@
     onclick={() => (open = !open)}>데이터 출처 · 라이선스</button
   >
   {#if open && meta}
-    <Pane class="absolute bottom-28 left-1/2 w-attr-sheet -translate-x-1/2 px-15 py-13 text-left">
+    <Pane class="absolute bottom-28 left-1/2 w-attr-sheet -translate-x-1/2 px-15 py-12 text-left">
       <button
-        class="absolute top-6 right-9 cursor-pointer border-0 bg-transparent text-lg text-tx3"
+        class="absolute top-6 right-8 cursor-pointer border-0 bg-transparent text-lg text-tx3"
         onclick={() => (open = false)}
         aria-label="닫기">×</button
       >
       <h3 class="mb-8 font-mono text-sm tracking-12 text-tx3 uppercase">데이터 출처</h3>
-      <ul class="m-0 grid list-none gap-9 p-0">
+      <ul class="m-0 grid list-none gap-8 p-0">
         {#each meta.sources as s (s.key)}
           <li class="grid gap-2">
             <a
@@ -49,7 +49,7 @@
           >
         </li>
       </ul>
-      <div class="mt-11 border-t border-line pt-8 font-mono text-2xs text-tx3">
+      <div class="mt-12 border-t border-line pt-8 font-mono text-2xs text-tx3">
         노드 {meta.counts.graphNodes?.toLocaleString()} · 엣지 {meta.counts.graphEdges?.toLocaleString()}
         · 건물 {meta.counts.buildings?.toLocaleString()} · 빌드 {meta.builtAt.slice(0, 10)}
       </div>

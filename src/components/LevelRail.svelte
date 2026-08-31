@@ -12,7 +12,7 @@
   aria-label="층 선택"
 >
   <button
-    class="flex w-full cursor-pointer items-center gap-9 rounded-3 border-0 px-8 py-3 text-left font-mono text-sm transition duration-150 {app.activeLevel ===
+    class="flex w-full cursor-pointer items-center gap-8 rounded-3 border-0 px-8 py-3 text-left font-mono text-sm transition duration-150 {app.activeLevel ===
     null
       ? 'bg-amber font-semibold text-bg'
       : 'bg-transparent text-tx3 hover:bg-panel2 hover:text-tx2'}"
@@ -26,7 +26,7 @@
   {#each LEVELS as lv (lv.id)}
     {#if present.has(lv.id)}
       <button
-        class="flex w-full cursor-pointer items-center gap-9 rounded-3 border-0 px-8 py-3 text-left font-mono text-sm transition duration-150 {app.activeLevel ===
+        class="flex w-full cursor-pointer items-center gap-8 rounded-3 border-0 px-8 py-3 text-left font-mono text-sm transition duration-150 {app.activeLevel ===
         lv.id
           ? 'bg-amber font-semibold text-bg'
           : 'bg-transparent text-tx3 hover:bg-panel2 hover:text-tx2'}"

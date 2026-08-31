@@ -225,7 +225,7 @@
     <h1 class="m-0 font-mono text-base font-semibold tracking-title text-tx">SHIBUYA STATION</h1>
     <p class="mt-3 text-sm text-tx3">시부야역 입체 보행 네트워크</p>
     {#if app.doc}
-      <p class="mt-7 font-mono text-2xs tracking-4 text-amber">
+      <p class="mt-6 font-mono text-2xs tracking-4 text-amber">
         공식 보행망 {app.doc.meta.counts.mlitLinks} 링크 · OSM {app.doc.meta.counts.osmSegments} 구간
         · 역 구내 {app.doc.meta.counts.curatedPlaces} 지점
       </p>
@@ -233,11 +233,11 @@
   </header>
 
   {#if app.error}
-    <Pane class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 px-18 py-14 text-11 text-tx2">
-      지도를 표시할 수 없습니다. <code class="mt-6 block text-10 text-tx3">{app.error}</code>
+    <Pane class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 px-18 py-14 text-sm text-tx2">
+      지도를 표시할 수 없습니다. <code class="mt-6 block text-sm text-tx3">{app.error}</code>
     </Pane>
   {:else if !app.doc}
-    <Pane class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 px-18 py-14 text-11 text-tx2">
+    <Pane class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 px-18 py-14 text-sm text-tx2">
       데이터 로딩 중…
     </Pane>
   {:else}

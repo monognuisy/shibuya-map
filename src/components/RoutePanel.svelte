@@ -29,7 +29,7 @@
 </script>
 
 <Pane
-  class="fixed top-14 right-14 w-280 max-h-route overflow-y-auto px-13 py-11"
+  class="fixed top-14 right-14 w-280 max-h-route overflow-y-auto px-12 py-12"
 >
   <div class="mb-8 font-mono text-2xs tracking-13 text-tx3 uppercase">경로 안내</div>
 
@@ -87,28 +87,28 @@
 
   {#if app.route}
     {@const r = app.route}
-    <div class="mt-10 border-t border-line pt-9">
+    <div class="mt-10 border-t border-line pt-8">
       <div class="font-mono text-xl font-semibold text-amber">{formatDuration(r.seconds)}</div>
-      <div class="mt-2 text-10 text-tx2">
+      <div class="mt-2 text-sm text-tx2">
         {r.distance} m · 올라감 {r.climb} m · 내려감 {r.descend} m
       </div>
-      <div class="mt-2 text-10 text-tx2">
+      <div class="mt-2 text-sm text-tx2">
         {#if r.gateCrossings === 0}
           개찰을 지나지 않습니다
         {:else}
           개찰 통과 {r.gateCrossings}회
         {/if}
       </div>
-      <div class="mt-7 flex flex-wrap items-center gap-3">
+      <div class="mt-6 flex flex-wrap items-center gap-3">
         {#each r.levels as lv, i (i)}
-          <span class="rounded-3 border border-line2 bg-panel2 px-5 py-1 font-mono text-xs text-tx2"
+          <span class="rounded-3 border border-line2 bg-panel2 px-4 py-1 font-mono text-xs text-tx2"
             >{levelCode(lv)}</span
           >{#if i < r.levels.length - 1}<span class="text-2xs text-tx3">→</span>{/if}
         {/each}
       </div>
     </div>
     <button
-      class="mt-10 w-full cursor-pointer rounded-4 border border-amber bg-amber px-10 py-5
+      class="mt-10 w-full cursor-pointer rounded-4 border border-amber bg-amber px-10 py-4
              font-sans text-sm font-medium text-bg transition duration-150
              hover:border-amber-dim hover:text-bg hover:opacity-90"
       onclick={() => {

@@ -16,8 +16,8 @@
 </script>
 
 <!-- bottom-42: 아래 가운데의 출처 버튼과 겹치지 않게 한 칸 올린다 -->
-<Pane class="fixed bottom-42 left-1/2 w-nav -translate-x-1/2 pt-9 px-12 pb-7">
-  <div class="flex items-center gap-7">
+<Pane class="fixed bottom-42 left-1/2 w-nav -translate-x-1/2 pt-8 px-12 pb-6">
+  <div class="flex items-center gap-6">
     <button
       class="w-28 cursor-pointer rounded-4 border border-line2 bg-panel2 px-0 py-4 text-center
              font-mono text-sm text-tx2 transition duration-150 hover:border-amber-dim hover:text-tx"
@@ -40,7 +40,7 @@
       aria-label="다음 구간">›</button
     >
 
-    <div class="flex min-w-0 flex-1 flex-wrap items-baseline gap-6 text-11 text-tx2">
+    <div class="flex min-w-0 flex-1 flex-wrap items-baseline gap-6 text-sm text-tx2">
       {#if leg}
         <span class="font-medium text-tx">{legSummary(leg)}</span>
         <span class="font-mono text-xs text-tx3"
@@ -64,7 +64,7 @@
       배속
       <select
         bind:value={app.navSpeed}
-        class="cursor-pointer rounded-4 border border-line2 bg-panel2 px-4 py-2 font-mono text-10
+        class="cursor-pointer rounded-4 border border-line2 bg-panel2 px-4 py-2 font-mono text-sm
                text-tx2"
       >
         <option value={0.5}>0.5×</option>
@@ -90,7 +90,7 @@
     }}
     aria-label="경로 진행"
   />
-  <div class="-mt-5 h-2 rounded-1 bg-line2">
-    <span class="block h-full rounded-1 bg-amber" style="width:{progress * 100}%"></span>
+  <div class="-mt-4 h-2 rounded-2 bg-line2">
+    <span class="block h-full rounded-2 bg-amber" style="width:{progress * 100}%"></span>
   </div>
 </Pane>
