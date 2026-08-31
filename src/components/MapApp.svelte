@@ -251,7 +251,7 @@
       데이터 로딩 중…
     </Pane>
   {:else}
-    <div data-compact={compact}>
+    <div data-compact={compact ? '' : undefined}>
       <DesktopShell {app} onReset={() => scene?.resetView()} />
     </div>
   {/if}
